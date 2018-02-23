@@ -1,27 +1,35 @@
 package io.github.t3r1jj.ips.collector
 
+import android.Manifest
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.Toast
+import io.github.t3r1jj.ips.collector.model.Sampler
+import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL.*
+import trikita.anvil.RenderableAdapter
 import trikita.anvil.RenderableView
 
 
 class WifiActivity : AppCompatActivity() {
 
     var place = ""
-    var samplingRate = SamplingRate._1000MS
-    var objectsNumber = 10
+    lateinit var sampler : Sampler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        sampler = Sampler(this)
+        val spinnerAdapter = ArrayAdapter<SamplingRate>(this, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList())
         setContentView(object : RenderableView(this) {
             override fun view() {
+
                 linearLayout {
                     size(MATCH, MATCH)
                     padding(dip(8))
@@ -39,46 +47,76 @@ class WifiActivity : AppCompatActivity() {
                             onTextChanged {
                                 place = it.toString()
                             }
+                            enabled(editingEnabled())
                         }
                     }
 
                     linearLayout {
                         orientation(LinearLayout.HORIZONTAL)
+                        size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
                             text("Number of objects: ")
                         }
                         editText {
                             size(MATCH, WRAP)
-                            text(objectsNumber.toString())
+                            text(sampler.sampleCount.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
-                                objectsNumber = it.toString().toInt()
+                                sampler.sampleCount = it.toString().toInt()
                             }
+                            enabled(editingEnabled())
                         }
                     }
                     linearLayout {
                         orientation(LinearLayout.HORIZONTAL)
+                        size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
                             text("Sampling rate: ")
                         }
                         spinner {
                             size(MATCH, WRAP)
-                            adapter(ArrayAdapter<SamplingRate>(this@WifiActivity, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList()))
+                            adapter(spinnerAdapter)
+                            onItemSelected { a, v, pos, id ->
+                                sampler.samplingRate = a.selectedItem as SamplingRate
+                            }
                         }
-                    }
-
-                    button {
-                        size(MATCH, WRAP)
-                        text("Collect")
-                        onClick { v -> finish() }
+                        enabled(editingEnabled())
                     }
 
                     linearLayout {
+                        orientation(LinearLayout.HORIZONTAL)
+                        size(MATCH, WRAP)
+                        button {
+                            size(0, WRAP)
+                            text("Sample")
+                            onClick {
+                                try {
+                                    sampler.startSampling()
+                                } catch (ex: RuntimeException) {
+                                    Toast.makeText(this@WifiActivity, ex.localizedMessage, Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            weight(0.5f)
+                            enabled(editingEnabled())
+                        }
+                        button {
+                            size(0, WRAP)
+                            text("Stop")
+                            onClick {
+                                sampler.stopSampling()
+                            }
+                            weight(0.5f)
+                            enabled(!editingEnabled())
+                        }
+                    }
+
+                    listView {
                         orientation(LinearLayout.VERTICAL)
                         size(MATCH, 0)
                         weight(1f)
+                        adapter(sampler.infoAdapter)
                     }
 
                     button {
@@ -86,13 +124,25 @@ class WifiActivity : AppCompatActivity() {
                         text("Submit")
                         onClick { v -> finish() }
                         weight(0f)
+                        enabled(sampler.finished)
                     }
                 }
             }
         })
+
+
+        val PERMS_INITIAL = arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION)
+        ActivityCompat.requestPermissions(this, PERMS_INITIAL, 127)
     }
 
-    enum class SamplingRate() {
-        _1000MS, _2000MS, _5000MS
+    override fun onPause() {
+        super.onPause()
+        sampler.stopSampling()
+    }
+
+    private fun editingEnabled() = !sampler.started || sampler.finished
+
+    enum class SamplingRate(val delay: Long) {
+        _1000MS(1000), _2000MS(2000), _5000MS(5000);
     }
 }
