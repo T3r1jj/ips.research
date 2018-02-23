@@ -32,6 +32,7 @@
                     android:layout_weight="0.3" />
 
                 <Button
+                    android:id="@+id/inertial_button"
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
@@ -43,6 +44,7 @@
                     android:layout_weight="0.1" />
 
                 <Button
+                    android:id="@+id/wifi_button"
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
