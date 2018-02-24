@@ -53,6 +53,18 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
+                    android:layout_weight="0.1" />
+
+                <Button
+                    android:id="@+id/show_db_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_weight="0.1"
+                    android:text="Show collected data" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
                     android:layout_weight="0.3" />
             </LinearLayout>
         </RelativeLayout>

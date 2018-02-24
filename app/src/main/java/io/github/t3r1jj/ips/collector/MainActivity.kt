@@ -16,5 +16,10 @@ class MainActivity : AppCompatActivity() {
                     Intent(this, WifiActivity::class.java)
             )
         }
+        show_db_button.setOnClickListener {
+            startActivity(
+                    Intent(this, DatabaseActivity::class.java)
+            )
+        }
     }
 }

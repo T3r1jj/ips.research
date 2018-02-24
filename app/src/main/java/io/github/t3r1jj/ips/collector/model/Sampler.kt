@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.util.Log
-import android.widget.Adapter
 import io.github.t3r1jj.ips.collector.WifiActivity
 import trikita.anvil.Anvil
 import trikita.anvil.DSL
@@ -23,8 +22,20 @@ class Sampler(val context: Context) {
     var samplingRate = WifiActivity.SamplingRate._1000MS
     var sampleCount = 10
     var finished = false
+        set(value) {
+            field = value
+            Anvil.render()
+        }
     var started = false
+        set(value) {
+            field = value
+            Anvil.render()
+        }
     var sampleIndex = 0
+        set(value) {
+            field = value
+            Anvil.render()
+        }
 
     private val wifiManager: WifiManager
         get() {
@@ -32,6 +43,7 @@ class Sampler(val context: Context) {
         }
 
     fun startSampling() {
+        stopSampling()
         if (!wifiManager.isWifiEnabled) {
             throw RuntimeException("WiFi not enabled")
         }
@@ -75,8 +87,6 @@ class Sampler(val context: Context) {
                 fingerprints.add(fingerprint)
             }
             Thread.sleep(samplingRate.delay)
-            updateAdapter()
-            Anvil.render()
             if (sampleIndex < sampleCount) {
                 wifiManager.scanResults.clear()
                 if (!wifiManager.startScan()) {
@@ -87,23 +97,5 @@ class Sampler(val context: Context) {
                 finished = true
             }
         }
-    }
-
-    data class Fingerprint(val bssid: String, val rssi: Int, val timestamp: Long)
-
-    var infoAdapter = createAdapter()
-
-    fun updateAdapter() {
-        infoAdapter = createAdapter()
-    }
-
-    private fun createAdapter(): RenderableAdapter {
-        return RenderableAdapter.withItems(fingerprints, { i, item ->
-            DSL.linearLayout {
-                DSL.textView {
-                    DSL.text(item.toString())
-                }
-            }
-        })
     }
 }

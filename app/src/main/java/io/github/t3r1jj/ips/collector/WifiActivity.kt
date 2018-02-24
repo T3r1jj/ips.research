@@ -5,28 +5,33 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
+import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
+import io.github.t3r1jj.ips.collector.model.Dao
+import io.github.t3r1jj.ips.collector.model.Fingerprint
 import io.github.t3r1jj.ips.collector.model.Sampler
+import io.github.t3r1jj.ips.collector.model.WifiDataset
 import trikita.anvil.Anvil
-import trikita.anvil.BaseDSL
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
+import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
-import trikita.anvil.RenderableView
+import java.util.*
 
 
 class WifiActivity : AppCompatActivity() {
 
     var place = ""
-    lateinit var sampler : Sampler
+    lateinit var sampler: Sampler
+    lateinit var spinnerAdapter: Adapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         sampler = Sampler(this)
-        val spinnerAdapter = ArrayAdapter<SamplingRate>(this, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList())
+        spinnerAdapter = ArrayAdapter<SamplingRate>(this, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList())
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -64,6 +69,7 @@ class WifiActivity : AppCompatActivity() {
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
                                 sampler.sampleCount = it.toString().toInt()
+                                println("SASSASASSAASSASAASASASASASASAS")
                             }
                             enabled(editingEnabled())
                         }
@@ -116,15 +122,25 @@ class WifiActivity : AppCompatActivity() {
                         orientation(LinearLayout.VERTICAL)
                         size(MATCH, 0)
                         weight(1f)
-                        adapter(sampler.infoAdapter)
+                        adapter(RenderableAdapter.withItems(sampler.fingerprints, { i, item ->
+                            DSL.linearLayout {
+                                DSL.textView {
+                                    DSL.text(item.toString())
+                                }
+                            }
+                        }))
                     }
 
                     button {
                         size(MATCH, WRAP)
                         text("Submit")
-                        onClick { v -> finish() }
+                        onClick {
+                            Dao(this@WifiActivity)
+                                    .save(WifiDataset(place, sampler.fingerprints))
+                            sampler.finished = false
+                        }
                         weight(0f)
-                        enabled(sampler.finished)
+                        enabled(sampler.finished && place.isNotBlank())
                     }
                 }
             }
