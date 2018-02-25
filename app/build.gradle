@@ -39,4 +39,5 @@ dependencies {
     compile 'co.trikita:anvil-sdk15:0.5.1'
     compile 'com.couchbase.lite:couchbase-lite-android:1.4.1'
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
 }

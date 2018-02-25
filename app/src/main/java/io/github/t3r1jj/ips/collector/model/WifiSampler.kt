@@ -9,12 +9,10 @@ import android.net.wifi.WifiManager
 import android.util.Log
 import io.github.t3r1jj.ips.collector.WifiActivity
 import trikita.anvil.Anvil
-import trikita.anvil.DSL
-import trikita.anvil.RenderableAdapter
 import java.util.*
 
 
-class Sampler(val context: Context) {
+class WifiSampler(val context: Context) {
 
 
     val fingerprints = mutableListOf<Fingerprint>()

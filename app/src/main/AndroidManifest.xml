@@ -20,6 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".InertialActivity"></activity>
         <activity android:name=".WifiActivity"></activity>
         <activity android:name=".DatabaseActivity"></activity>
     </application>

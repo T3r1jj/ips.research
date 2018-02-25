@@ -10,27 +10,24 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
 import io.github.t3r1jj.ips.collector.model.Dao
-import io.github.t3r1jj.ips.collector.model.Fingerprint
-import io.github.t3r1jj.ips.collector.model.Sampler
+import io.github.t3r1jj.ips.collector.model.WifiSampler
 import io.github.t3r1jj.ips.collector.model.WifiDataset
-import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
-import java.util.*
 
 
 class WifiActivity : AppCompatActivity() {
 
     var place = ""
-    lateinit var sampler: Sampler
+    lateinit var sampler: WifiSampler
     lateinit var spinnerAdapter: Adapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sampler = Sampler(this)
+        sampler = WifiSampler(this)
         spinnerAdapter = ArrayAdapter<SamplingRate>(this, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList())
         setContentView(object : RenderableView(this) {
             override fun view() {
@@ -68,8 +65,10 @@ class WifiActivity : AppCompatActivity() {
                             text(sampler.sampleCount.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
-                                sampler.sampleCount = it.toString().toInt()
-                                println("SASSASASSAASSASAASASASASASASAS")
+                                try {
+                                    sampler.sampleCount = it.toString().toInt()
+                                } catch (nfe: NumberFormatException) {
+                                }
                             }
                             enabled(editingEnabled())
                         }

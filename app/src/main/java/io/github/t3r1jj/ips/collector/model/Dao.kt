@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.t3r1jj.ips.collector.BuildConfig
-import kotlin.reflect.full.memberProperties
 
 
 class Dao(private val context: Context) {

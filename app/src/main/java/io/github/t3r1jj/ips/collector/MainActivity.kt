@@ -11,6 +11,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        inertial_button.setOnClickListener {
+            startActivity(
+                    Intent(this, InertialActivity::class.java)
+            )
+        }
         wifi_button.setOnClickListener {
             startActivity(
                     Intent(this, WifiActivity::class.java)
