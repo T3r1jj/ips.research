@@ -5,14 +5,25 @@ import com.couchbase.lite.Database
 import com.couchbase.lite.Manager
 import com.couchbase.lite.Query
 import com.couchbase.lite.android.AndroidContext
+import com.couchbase.lite.auth.PasswordAuthorizer
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.t3r1jj.ips.collector.BuildConfig
 import io.github.t3r1jj.ips.collector.model.data.*
+import java.net.URL
 
 
 class Dao(private val context: Context) {
+    companion object {
+        internal const val DB_ROOT_URL = "couchdbtest12e3.smileupps.com"
+        private const val DB_PROTOCOL = "http://"
+        private const val DB_NAME = "/ips"
+        private const val DB_URL = DB_PROTOCOL + DB_ROOT_URL + DB_NAME
+        private const val DB_USERNAME = "admin"
+        private const val DB_PASSWORD = "49c0738edb83"
+    }
+
     private val objectMapper = ObjectMapper()
 
     init {
@@ -54,6 +65,14 @@ class Dao(private val context: Context) {
 
     fun delete(id: String) {
         getDatabase().getDocument(id).delete()
+    }
+
+    fun replicate() {
+        val url = URL(DB_URL)
+        val push = getDatabase().createPushReplication(url)
+        push.authenticator = PasswordAuthorizer(DB_USERNAME, DB_PASSWORD)
+        push.isContinuous = false
+        push.start()
     }
 
 }

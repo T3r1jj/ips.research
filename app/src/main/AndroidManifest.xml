@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.github.t3r1jj.ips.collector">
 
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -13,17 +14,33 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:label="IPS Collector Module">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".InertialActivity"></activity>
-        <activity android:name=".WifiActivity"></activity>
-        <activity android:name=".MagneticActivity"></activity>
-        <activity android:name=".DatabaseActivity"></activity>
+        <activity
+            android:name=".InertialActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="Inertial Sampling"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".WifiActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="Wifi Fingerprinting"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MagneticActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="Magnetic Sampling/Fingerprinting"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".DatabaseActivity"
+            android:label="Collected Data" />
     </application>
 
 </manifest>

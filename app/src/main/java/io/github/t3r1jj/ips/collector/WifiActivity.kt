@@ -162,6 +162,6 @@ class WifiActivity : AppCompatActivity() {
     }
 
     enum class SamplingRate(val delay: Long) {
-        _1000MS(1000), _2000MS(2000), _5000MS(5000);
+        _500MS(500), _1000MS(1000), _5000MS(5000);
     }
 }

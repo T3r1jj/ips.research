@@ -47,20 +47,25 @@ class InertialActivity : AppCompatActivity() {
     lateinit var rotationChart: LineChart
     private val visibleSampleCount = 100
 
-    val renderInitiator = Thread({
-        try {
-            while (!Thread.interrupted() && sampler.isRunning) {
-                addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
-                        ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                addChartEntry(linearAccelerationChart, sampler.linearAcceleration.lastOrNull()?.data
-                        ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
-                        ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                Thread.sleep(CHARTING_DELAY)
+    var renderInitiator = Thread(RenderRunnable())
+
+    inner class RenderRunnable : Runnable {
+        override fun run() {
+            try {
+                while (!Thread.interrupted() && sampler.isRunning) {
+                    addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    addChartEntry(linearAccelerationChart, sampler.linearAcceleration.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    Thread.sleep(CHARTING_DELAY)
+                }
+            } catch (e: InterruptedException) {
             }
-        } catch (e: InterruptedException) {
         }
-    })
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,15 +129,14 @@ class InertialActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Sample")
                             onClick {
-                                sampler.stopSampling()
+                                stopSampling()
                                 clearChart(accelerationChart)
                                 clearChart(linearAccelerationChart)
                                 clearChart(rotationChart)
                                 submitted = false
                                 sampler.startSampling()
-                                if (!renderInitiator.isAlive) {
-                                    renderInitiator.start()
-                                }
+                                renderInitiator = Thread(RenderRunnable())
+                                renderInitiator.start()
                             }
                             weight(0.5f)
                         }
@@ -140,7 +144,7 @@ class InertialActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Stop")
                             onClick {
-                                sampler.stopSampling()
+                                stopSampling()
                             }
                             enabled(sampler.isRunning)
                             weight(0.5f)
@@ -204,9 +208,14 @@ class InertialActivity : AppCompatActivity() {
 
     }
 
+    private fun stopSampling() {
+        sampler.stopSampling()
+        renderInitiator.interrupt()
+    }
+
     override fun onStop() {
         super.onStop()
-        sampler.stopSampling()
+        stopSampling()
     }
 
     private fun createChart(): LineChart {

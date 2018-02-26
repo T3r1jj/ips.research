@@ -45,21 +45,28 @@ class MagneticActivity : AppCompatActivity() {
     lateinit var sampler: MagneticSampler
     lateinit var magneticFieldChart: LineChart
     lateinit var magneticFingerprintChart: LineChart
-    private val visibleSampleCount = 100
+    lateinit var rotationChart: LineChart
+    private val visibleSampleCount = 50
 
-    val renderInitiator = Thread({
-        try {
-            while (!Thread.interrupted() && sampler.isRunning) {
-                addChartEntry(magneticFieldChart, sampler.magneticField.lastOrNull()?.data
-                        ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                addChartEntry(magneticFingerprintChart, Math.sqrt((sampler.magneticField.lastOrNull()?.data
-                        ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
-                Thread.sleep(CHARTING_DELAY)
+    var renderInitiator = Thread(RenderRunnable())
+
+    inner class RenderRunnable : Runnable {
+        override fun run() {
+            try {
+                while (!Thread.interrupted() && sampler.isRunning) {
+                    addChartEntry(magneticFieldChart, sampler.magneticField.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    addChartEntry(magneticFingerprintChart, Math.sqrt((sampler.magneticField.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
+                    addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
+                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    Thread.sleep(CHARTING_DELAY)
+                }
+                Anvil.render()
+            } catch (e: InterruptedException) {
             }
-            Anvil.render()
-        } catch (e: InterruptedException) {
         }
-    })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +76,8 @@ class MagneticActivity : AppCompatActivity() {
         magneticFieldChart.description.text = "Magnetic field (uT)"
         magneticFingerprintChart = createChart()
         magneticFingerprintChart.description.text = "Magnetic fingerprint abs(uT)"
+        rotationChart = createChart()
+        rotationChart.description.text = "Rotation (rad/s to s)"
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -135,14 +144,13 @@ class MagneticActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Sample")
                             onClick {
-                                sampler.stopSampling()
+                                stopSampling()
                                 clearChart(magneticFieldChart)
                                 clearChart(magneticFingerprintChart)
                                 submitted = false
                                 sampler.startSampling()
-                                if (!renderInitiator.isAlive) {
-                                    renderInitiator.start()
-                                }
+                                renderInitiator = Thread(RenderRunnable())
+                                renderInitiator.start()
                             }
                             weight(0.5f)
                         }
@@ -150,7 +158,7 @@ class MagneticActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Stop")
                             onClick {
-                                sampler.stopSampling()
+                                stopSampling()
                             }
                             enabled(sampler.isRunning)
                             weight(0.5f)
@@ -177,6 +185,12 @@ class MagneticActivity : AppCompatActivity() {
                                 weight(0.5f)
                                 size(MATCH, 0)
                                 customView(magneticFingerprintChart)
+                            }
+                            linearLayout {
+                                orientation(VERTICAL)
+                                weight(0.5f)
+                                size(MATCH, 0)
+                                customView(rotationChart)
                             }
                             size(MATCH, 0)
                             weight(1f)
@@ -212,9 +226,14 @@ class MagneticActivity : AppCompatActivity() {
 
     }
 
+    private fun stopSampling() {
+        sampler.stopSampling()
+        renderInitiator.interrupt()
+    }
+
     override fun onStop() {
         super.onStop()
-        sampler.stopSampling()
+        stopSampling()
     }
 
     private fun createChart(): LineChart {

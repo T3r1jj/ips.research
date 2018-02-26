@@ -16,9 +16,9 @@ import java.util.*
 class WifiSampler(val context: Context) {
 
 
+    private val wifiScanReceiver = WifiScanReceiver()
     val fingerprints = mutableListOf<Fingerprint>()
-    val wifiScanReceiver = WifiScanReceiver()
-    var samplingRate = WifiActivity.SamplingRate._1000MS
+    var samplingRate = WifiActivity.SamplingRate._500MS
     var sampleCount = 10
     var running = false
         set(value) {
@@ -73,9 +73,7 @@ class WifiSampler(val context: Context) {
 
         override fun onReceive(c: Context, intent: Intent) {
             sampleIndex++
-            println("\nNumber of Wifi Connections: " + wifiManager.scanResults.size + "\n")
             wifiManager.scanResults.forEach {
-                println(it.toString())
                 val fingerprint = createFingerprint(it)
                 fingerprints.add(fingerprint)
             }
