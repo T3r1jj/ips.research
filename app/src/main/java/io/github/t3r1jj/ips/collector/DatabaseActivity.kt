@@ -15,8 +15,8 @@ import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
 import android.content.DialogInterface
 import android.os.Environment
-import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
 import java.io.File
 import java.util.*
@@ -98,7 +98,7 @@ class DatabaseActivity : AppCompatActivity() {
             }
         })
 
-        Toast.makeText(this, "Long press on record for single removal", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Long press on record for single removal", Toast.LENGTH_SHORT).show()
     }
 
     fun isExternalStorageWritable(): Boolean {

@@ -22,6 +22,7 @@
         </activity>
         <activity android:name=".InertialActivity"></activity>
         <activity android:name=".WifiActivity"></activity>
+        <activity android:name=".MagneticActivity"></activity>
         <activity android:name=".DatabaseActivity"></activity>
     </application>
 

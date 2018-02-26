@@ -1,4 +1,4 @@
-package io.github.t3r1jj.ips.collector
+package io.github.t3r1jj.ips.collector.view
 
 import android.content.Context
 import trikita.anvil.Anvil

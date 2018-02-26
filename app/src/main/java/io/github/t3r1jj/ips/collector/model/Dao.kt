@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.t3r1jj.ips.collector.BuildConfig
+import io.github.t3r1jj.ips.collector.model.data.*
 
 
 class Dao(private val context: Context) {
@@ -42,8 +43,10 @@ class Dao(private val context: Context) {
         val result = query.run()
         while (result.hasNext()) {
             val row = result.next()
-            if (DatasetType.WIFI.toString() == row.document.getProperty("type")) {
-                results.put(row.sourceDocumentId, objectMapper.convertValue(row.document.properties, object : TypeReference<WifiDataset>() {}))
+            when {
+                DatasetType.WIFI.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<WifiDataset>() {})
+                DatasetType.INERTIAL.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<InertialDataset>() {})
+                DatasetType.MAGNETIC.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<MagneticDataset>() {})
             }
         }
         return results

@@ -10,8 +10,9 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
 import io.github.t3r1jj.ips.collector.model.Dao
-import io.github.t3r1jj.ips.collector.model.WifiSampler
-import io.github.t3r1jj.ips.collector.model.WifiDataset
+import io.github.t3r1jj.ips.collector.model.sampler.WifiSampler
+import io.github.t3r1jj.ips.collector.model.data.WifiDataset
+import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL
@@ -22,6 +23,7 @@ import trikita.anvil.RenderableAdapter
 class WifiActivity : AppCompatActivity() {
 
     var place = ""
+    var submitted = false
     lateinit var sampler: WifiSampler
     lateinit var spinnerAdapter: Adapter
 
@@ -49,7 +51,7 @@ class WifiActivity : AppCompatActivity() {
                             onTextChanged {
                                 place = it.toString()
                             }
-                            enabled(editingEnabled())
+                            enabled(!sampler.running)
                         }
                     }
 
@@ -70,7 +72,7 @@ class WifiActivity : AppCompatActivity() {
                                 } catch (nfe: NumberFormatException) {
                                 }
                             }
-                            enabled(editingEnabled())
+                            enabled(!sampler.running)
                         }
                     }
                     linearLayout {
@@ -87,7 +89,7 @@ class WifiActivity : AppCompatActivity() {
                                 sampler.samplingRate = a.selectedItem as SamplingRate
                             }
                         }
-                        enabled(editingEnabled())
+                        enabled(!sampler.running)
                     }
 
                     linearLayout {
@@ -104,7 +106,7 @@ class WifiActivity : AppCompatActivity() {
                                 }
                             }
                             weight(0.5f)
-                            enabled(editingEnabled())
+                            enabled(!sampler.running)
                         }
                         button {
                             size(0, WRAP)
@@ -113,7 +115,7 @@ class WifiActivity : AppCompatActivity() {
                                 sampler.stopSampling()
                             }
                             weight(0.5f)
-                            enabled(!editingEnabled())
+                            enabled(sampler.running)
                         }
                     }
 
@@ -134,12 +136,16 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("Submit")
                         onClick {
-                            Dao(this@WifiActivity)
-                                    .save(WifiDataset(place, sampler.fingerprints))
-                            sampler.finished = false
+                            if (place.isBlank()) {
+                                Toast.makeText(this@WifiActivity, "Please provide a place name for classification", Toast.LENGTH_LONG).show()
+                            } else {
+                                Dao(this@WifiActivity)
+                                        .save(WifiDataset(place, sampler.fingerprints))
+                                submitted = true
+                            }
                         }
                         weight(0f)
-                        enabled(sampler.finished && place.isNotBlank())
+                        enabled(sampler.fingerprints.isNotEmpty() && !sampler.running && !submitted)
                     }
                 }
             }
@@ -150,12 +156,10 @@ class WifiActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(this, PERMS_INITIAL, 127)
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStop() {
+        super.onStop()
         sampler.stopSampling()
     }
-
-    private fun editingEnabled() = !sampler.started || sampler.finished
 
     enum class SamplingRate(val delay: Long) {
         _1000MS(1000), _2000MS(2000), _5000MS(5000);

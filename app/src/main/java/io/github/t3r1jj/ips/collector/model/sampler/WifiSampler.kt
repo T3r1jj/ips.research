@@ -1,4 +1,4 @@
-package io.github.t3r1jj.ips.collector.model
+package io.github.t3r1jj.ips.collector.model.sampler
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,6 +8,7 @@ import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.util.Log
 import io.github.t3r1jj.ips.collector.WifiActivity
+import io.github.t3r1jj.ips.collector.model.data.Fingerprint
 import trikita.anvil.Anvil
 import java.util.*
 
@@ -19,12 +20,7 @@ class WifiSampler(val context: Context) {
     val wifiScanReceiver = WifiScanReceiver()
     var samplingRate = WifiActivity.SamplingRate._1000MS
     var sampleCount = 10
-    var finished = false
-        set(value) {
-            field = value
-            Anvil.render()
-        }
-    var started = false
+    var running = false
         set(value) {
             field = value
             Anvil.render()
@@ -52,8 +48,7 @@ class WifiSampler(val context: Context) {
         if (!wifiManager.startScan()) {
             throw RuntimeException("startScan() fail")
         } else {
-            started = true
-            finished = false
+            running = true
         }
     }
 
@@ -63,7 +58,7 @@ class WifiSampler(val context: Context) {
         } catch (err: IllegalArgumentException) {
             Log.v(javaClass.name, "Could not unregister receiver since it was not registered")
         }
-        started = false
+        running = false
     }
 
     private fun createFingerprint(it: ScanResult): Fingerprint {
@@ -92,7 +87,6 @@ class WifiSampler(val context: Context) {
                 }
             } else {
                 stopSampling()
-                finished = true
             }
         }
     }

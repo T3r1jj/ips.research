@@ -16,6 +16,11 @@ class MainActivity : AppCompatActivity() {
                     Intent(this, InertialActivity::class.java)
             )
         }
+        magnetic_button.setOnClickListener {
+            startActivity(
+                    Intent(this, MagneticActivity::class.java)
+            )
+        }
         wifi_button.setOnClickListener {
             startActivity(
                     Intent(this, WifiActivity::class.java)

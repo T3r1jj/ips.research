@@ -29,7 +29,7 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
-                    android:layout_weight="0.3" />
+                    android:layout_weight="0.1" />
 
                 <Button
                     android:id="@+id/inertial_button"
@@ -37,6 +37,18 @@
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
                     android:text="Inertial" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_weight="0.1" />
+
+                <Button
+                    android:id="@+id/magnetic_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_weight="0.1"
+                    android:text="Magnetic" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -65,7 +77,7 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
-                    android:layout_weight="0.3" />
+                    android:layout_weight="0.1" />
             </LinearLayout>
         </RelativeLayout>
 
