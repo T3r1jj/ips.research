@@ -102,7 +102,7 @@ class WifiActivity : AppCompatActivity() {
                                 try {
                                     sampler.startSampling()
                                 } catch (ex: RuntimeException) {
-                                    Toast.makeText(this@WifiActivity, ex.localizedMessage, Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@WifiActivity, ex.toString(), Toast.LENGTH_LONG).show()
                                 }
                             }
                             weight(0.5f)

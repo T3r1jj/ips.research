@@ -2,6 +2,7 @@ package io.github.t3r1jj.ips.collector
 
 import android.content.Context
 import android.content.DialogInterface
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AlertDialog
@@ -19,8 +20,6 @@ import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
 import java.io.File
 import java.util.*
-import android.net.ConnectivityManager
-import java.net.InetAddress
 
 
 class DatabaseActivity : AppCompatActivity() {

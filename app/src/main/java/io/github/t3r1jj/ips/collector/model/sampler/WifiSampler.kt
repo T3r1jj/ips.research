@@ -63,9 +63,9 @@ class WifiSampler(val context: Context) {
 
     private fun createFingerprint(it: ScanResult): Fingerprint {
         return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            Fingerprint(it.BSSID, it.level, it.timestamp)
+            Fingerprint(it.BSSID, it.level, it.timestamp, it.SSID)
         } else {
-            Fingerprint(it.BSSID, it.level, Date().time)
+            Fingerprint(it.BSSID, it.level, Date().time, it.SSID)
         }
     }
 
