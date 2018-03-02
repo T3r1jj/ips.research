@@ -99,6 +99,7 @@ class WifiActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Sample")
                             onClick {
+                                submitted = false
                                 try {
                                     sampler.startSampling()
                                 } catch (ex: RuntimeException) {

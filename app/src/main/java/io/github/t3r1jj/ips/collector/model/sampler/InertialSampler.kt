@@ -9,6 +9,7 @@ class InertialSampler(context: Context) {
     val acceleration = mutableListOf<SensorSample>()
     val linearAcceleration = mutableListOf<SensorSample>()
     val rotation = mutableListOf<SensorSample>()
+    val gravity = mutableListOf<SensorSample>()
 
     var isRunning = false
     val isEmpty: Boolean
@@ -17,6 +18,7 @@ class InertialSampler(context: Context) {
         }
     var delay = SensorDelay.NORMAL
     private val accelerometerListener = SensorSampleEventListener(acceleration)
+    private val gravitySensorListener = SensorSampleEventListener(gravity)
     private val linearAccelerometerListener = SensorSampleEventListener(linearAcceleration)
     private val gyroscopeListener = SensorSampleEventListener(rotation)
 
@@ -27,6 +29,8 @@ class InertialSampler(context: Context) {
         rotation.clear()
         val linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         sensorManager.registerListener(linearAccelerometerListener, linearAccelerometer, delay.sensorManagerDelay)
+        val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+        sensorManager.registerListener(gravitySensorListener, gravitySensor, delay.sensorManagerDelay)
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         sensorManager.registerListener(accelerometerListener, accelerometer, delay.sensorManagerDelay)
         val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
@@ -36,6 +40,7 @@ class InertialSampler(context: Context) {
     fun stopSampling() {
         isRunning = false
         sensorManager.unregisterListener(linearAccelerometerListener)
+        sensorManager.unregisterListener(gravitySensorListener)
         sensorManager.unregisterListener(accelerometerListener)
         sensorManager.unregisterListener(gyroscopeListener)
     }

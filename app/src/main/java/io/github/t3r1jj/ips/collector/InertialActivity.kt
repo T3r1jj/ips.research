@@ -46,6 +46,7 @@ class InertialActivity : AppCompatActivity() {
     lateinit var linearAccelerationChart: LineChart
     lateinit var rotationChart: LineChart
     private val visibleSampleCount = 100
+    var stepsCount = 100
 
     var renderInitiator = Thread(RenderRunnable())
 
@@ -55,7 +56,7 @@ class InertialActivity : AppCompatActivity() {
                 while (!Thread.interrupted() && sampler.isRunning) {
                     addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
                             ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                    addChartEntry(linearAccelerationChart, sampler.linearAcceleration.lastOrNull()?.data
+                    addChartEntry(linearAccelerationChart, sampler.gravity.lastOrNull()?.data
                             ?: arrayOf(0f, 0f, 0f).toFloatArray())
                     addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
                             ?: arrayOf(0f, 0f, 0f).toFloatArray())
@@ -102,6 +103,26 @@ class InertialActivity : AppCompatActivity() {
                             adapter(movementAdapter)
                             onItemSelected { a, v, pos, id ->
                                 movementType = a.selectedItem as InertialMovementType
+                            }
+                        }
+                    }
+                    linearLayout {
+                        size(MATCH, WRAP)
+                        DSL.orientation(HORIZONTAL)
+                        textView {
+                            text("Steps count:")
+                            size(WRAP, WRAP)
+                        }
+                        editText {
+                            weight(1f)
+                            size(0, WRAP)
+                            text(stepsCount.toString())
+                            onTextChanged {
+                                stepsCount = try {
+                                    it.toString().toInt()
+                                } catch (nfe: NumberFormatException) {
+                                    0
+                                }
                             }
                         }
                     }
@@ -188,8 +209,10 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("Submit")
                         onClick {
+                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration, sampler.rotation, sampler.gravity)
+                            data.steps = stepsCount
                             Dao(this@InertialActivity)
-                                    .save(InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration, sampler.rotation))
+                                    .save(data)
                             submitted = true
                         }
                         enabled(!sampler.isEmpty && !sampler.isRunning && !submitted)
@@ -306,6 +329,6 @@ class InertialActivity : AppCompatActivity() {
     }
 
     enum class InertialMovementType {
-        WALKING, RUNNING, STAIRS
+        WALKING, RUNNING, STAIRS_UP, STAIRS_DOWN, NONE
     }
 }

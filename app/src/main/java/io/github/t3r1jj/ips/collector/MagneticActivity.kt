@@ -45,7 +45,7 @@ class MagneticActivity : AppCompatActivity() {
     lateinit var sampler: MagneticSampler
     lateinit var magneticFieldChart: LineChart
     lateinit var magneticFingerprintChart: LineChart
-    lateinit var rotationChart: LineChart
+    lateinit var gravityChart: LineChart
     private val visibleSampleCount = 50
 
     var renderInitiator = Thread(RenderRunnable())
@@ -58,7 +58,7 @@ class MagneticActivity : AppCompatActivity() {
                             ?: arrayOf(0f, 0f, 0f).toFloatArray())
                     addChartEntry(magneticFingerprintChart, Math.sqrt((sampler.magneticField.lastOrNull()?.data
                             ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
-                    addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
+                    addChartEntry(gravityChart, sampler.gravity.lastOrNull()?.data
                             ?: arrayOf(0f, 0f, 0f).toFloatArray())
                     Thread.sleep(CHARTING_DELAY)
                 }
@@ -72,12 +72,12 @@ class MagneticActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         sampler = MagneticSampler(this)
         val delayAdapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
-        magneticFieldChart = createChart()
+        magneticFieldChart = createChart(-75f, 75f)
         magneticFieldChart.description.text = "Magnetic field (uT)"
-        magneticFingerprintChart = createChart()
-        magneticFingerprintChart.description.text = "Magnetic fingerprint abs(uT)"
-        rotationChart = createChart()
-        rotationChart.description.text = "Rotation (rad/s to s)"
+        magneticFingerprintChart = createChart(0f, 150f)
+        magneticFingerprintChart.description.text = "Magnetic field magnitude (uT)"
+        gravityChart = createChart(-15f, 15f)
+        gravityChart.description.text = "Gravity (m/s2 to s)"
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -90,7 +90,7 @@ class MagneticActivity : AppCompatActivity() {
                         orientation(LinearLayout.HORIZONTAL)
                         textView {
                             size(WRAP, WRAP)
-                            text("Place name: ")
+                            text("Route name: ")
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -184,13 +184,13 @@ class MagneticActivity : AppCompatActivity() {
                                 orientation(VERTICAL)
                                 weight(0.5f)
                                 size(MATCH, 0)
-                                customView(magneticFingerprintChart)
+                                customView(gravityChart)
                             }
                             linearLayout {
                                 orientation(VERTICAL)
                                 weight(0.5f)
                                 size(MATCH, 0)
-                                customView(rotationChart)
+                                customView(magneticFingerprintChart)
                             }
                             size(MATCH, 0)
                             weight(1f)
@@ -203,10 +203,10 @@ class MagneticActivity : AppCompatActivity() {
                         text("Submit")
                         onClick {
                             if (place.isBlank()) {
-                                Toast.makeText(this@MagneticActivity, "Please provide a place name for classification", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@MagneticActivity, "Please provide a route name for classification", Toast.LENGTH_LONG).show()
                             } else {
                                 Dao(this@MagneticActivity)
-                                        .save(MagneticDataset(place, sampler.magneticField))
+                                        .save(MagneticDataset(place, sampler.magneticField, sampler.gravity))
                                 submitted = true
                             }
                         }
@@ -236,7 +236,7 @@ class MagneticActivity : AppCompatActivity() {
         stopSampling()
     }
 
-    private fun createChart(): LineChart {
+    private fun createChart(min: Float, max: Float): LineChart {
         val chart = object : LineChart(this) {
             override fun onDraw(canvas: Canvas?) {
                 try {
@@ -266,8 +266,8 @@ class MagneticActivity : AppCompatActivity() {
         xAxis.setAvoidFirstLastClipping(true)
         xAxis.isEnabled = true
         val leftAxis = chart.axisLeft
-        leftAxis.axisMaximum = 100f
-        leftAxis.axisMinimum = -50f
+        leftAxis.axisMaximum = max
+        leftAxis.axisMinimum = min
         leftAxis.setDrawGridLines(true)
         val rightAxis = chart.axisRight
         rightAxis.isEnabled = false

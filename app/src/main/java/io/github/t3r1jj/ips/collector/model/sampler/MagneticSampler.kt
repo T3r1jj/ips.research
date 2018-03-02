@@ -8,16 +8,16 @@ import android.hardware.SensorManager
 class MagneticSampler(context: Context) {
     private val sensorManager = context.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     val magneticField = mutableListOf<SensorSample>()
-    val rotation = mutableListOf<SensorSample>()
+    val gravity = mutableListOf<SensorSample>()
     var isRunning = false
-    var sampleCount = 50
+    var sampleCount = -1
     val isEmpty: Boolean
         get() {
             return magneticField.isEmpty()
         }
     var delay = SensorDelay.NORMAL
     private val magnetometerListener = SensorSampleUnlimitedEventListener(magneticField)
-    private val gyroscopeListener = SensorSampleUnlimitedEventListener(rotation)
+    private val gravitySensorListener = SensorSampleUnlimitedEventListener(gravity)
 
     inner class SensorSampleUnlimitedEventListener(samples: MutableList<SensorSample>) : SensorSampleEventListener(samples) {
         override fun onSensorChanged(p0: SensorEvent?) {
@@ -33,13 +33,13 @@ class MagneticSampler(context: Context) {
         magneticField.clear()
         val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         sensorManager.registerListener(magnetometerListener, magnetometer, delay.sensorManagerDelay)
-        val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        sensorManager.registerListener(gyroscopeListener, gyroscope, delay.sensorManagerDelay)
+        val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+        sensorManager.registerListener(gravitySensorListener, gravitySensor, delay.sensorManagerDelay)
     }
 
     fun stopSampling() {
         sensorManager.unregisterListener(magnetometerListener)
-        sensorManager.unregisterListener(gyroscopeListener)
+        sensorManager.unregisterListener(gravitySensorListener)
         isRunning = false
     }
 
