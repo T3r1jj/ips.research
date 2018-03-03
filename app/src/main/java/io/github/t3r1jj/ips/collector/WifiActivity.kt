@@ -1,8 +1,6 @@
 package io.github.t3r1jj.ips.collector
 
-import android.Manifest
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
 import android.widget.Adapter
@@ -10,8 +8,8 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
 import io.github.t3r1jj.ips.collector.model.Dao
-import io.github.t3r1jj.ips.collector.model.sampler.WifiSampler
 import io.github.t3r1jj.ips.collector.model.data.WifiDataset
+import io.github.t3r1jj.ips.collector.model.sampler.WifiSampler
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
@@ -60,7 +58,7 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
-                            text("Number of objects: ")
+                            text("Number of iterations: ")
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -85,7 +83,7 @@ class WifiActivity : AppCompatActivity() {
                         spinner {
                             size(MATCH, WRAP)
                             adapter(spinnerAdapter)
-                            onItemSelected { a, v, pos, id ->
+                            onItemSelected { a, _, _, _ ->
                                 sampler.samplingRate = a.selectedItem as SamplingRate
                             }
                         }
@@ -124,7 +122,7 @@ class WifiActivity : AppCompatActivity() {
                         orientation(LinearLayout.VERTICAL)
                         size(MATCH, 0)
                         weight(1f)
-                        adapter(RenderableAdapter.withItems(sampler.fingerprints, { i, item ->
+                        adapter(RenderableAdapter.withItems(sampler.fingerprints, { _, item ->
                             DSL.linearLayout {
                                 DSL.textView {
                                     DSL.text(item.toString())
@@ -140,8 +138,9 @@ class WifiActivity : AppCompatActivity() {
                             if (place.isBlank()) {
                                 Toast.makeText(this@WifiActivity, "Please provide a place name for classification", Toast.LENGTH_LONG).show()
                             } else {
+                                val data = WifiDataset(place, sampler.fingerprints)
                                 Dao(this@WifiActivity)
-                                        .save(WifiDataset(place, sampler.fingerprints))
+                                        .save(data)
                                 submitted = true
                             }
                         }
@@ -151,10 +150,6 @@ class WifiActivity : AppCompatActivity() {
                 }
             }
         })
-
-
-        val PERMS_INITIAL = arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION)
-        ActivityCompat.requestPermissions(this, PERMS_INITIAL, 127)
     }
 
     override fun onStop() {

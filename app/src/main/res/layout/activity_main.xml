@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -36,7 +35,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Inertial" />
+                    android:text="Inertial"
+                    android:textSize="18sp" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -48,7 +48,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Magnetic" />
+                    android:text="Magnetic"
+                    android:textSize="18sp" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -60,7 +61,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="WiFi" />
+                    android:text="WiFi"
+                    android:textSize="18sp" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -72,7 +74,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Show collected data" />
+                    android:text="Collected data"
+                    android:textSize="18sp" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"

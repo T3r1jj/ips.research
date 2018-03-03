@@ -1,16 +1,19 @@
 package io.github.t3r1jj.ips.collector.model
 
 import android.content.Context
+import android.util.Log
 import com.couchbase.lite.Database
 import com.couchbase.lite.Manager
 import com.couchbase.lite.Query
 import com.couchbase.lite.android.AndroidContext
 import com.couchbase.lite.auth.PasswordAuthorizer
+import com.couchbase.lite.replicator.Replication
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.t3r1jj.ips.collector.BuildConfig
 import io.github.t3r1jj.ips.collector.model.data.*
+import java.io.File
 import java.net.URL
 
 
@@ -38,6 +41,15 @@ class Dao(private val context: Context) {
         document.putProperties(properties)
     }
 
+    fun saveAll(file: File) {
+        val objectMapper = ObjectMapper()
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val data = objectMapper.readValue<Array<Dataset>>(file, object : TypeReference<Array<Dataset>>() {})
+        for (dataset in data) {
+            save(dataset)
+        }
+    }
+
     private fun getDatabase(): Database {
         val manager = Manager(AndroidContext(context.applicationContext), Manager.DEFAULT_OPTIONS)
         return manager.getDatabase(BuildConfig.APPLICATION_ID + ".db")
@@ -54,25 +66,40 @@ class Dao(private val context: Context) {
         val result = query.run()
         while (result.hasNext()) {
             val row = result.next()
-            when {
-                DatasetType.WIFI.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<WifiDataset>() {})
-                DatasetType.INERTIAL.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<InertialDataset>() {})
-                DatasetType.MAGNETIC.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<MagneticDataset>() {})
+            try {
+                when {
+                    DatasetType.WIFI.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<WifiDataset>() {})
+                    DatasetType.INERTIAL.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<InertialDataset>() {})
+                    DatasetType.MAGNETIC.toString() == row.document.getProperty("type") -> results[row.sourceDocumentId] = objectMapper.convertValue(row.document.properties, object : TypeReference<MagneticDataset>() {})
+                }
+            } catch (ex: Exception) {
+                Log.w("Dao", "Record incompatible with the current model, ignoring...")
+                delete(row.sourceDocumentId)
             }
         }
         return results
+    }
+
+    fun pull(): Replication {
+        val url = URL(DB_URL)
+        val pull = getDatabase().createPullReplication(url)
+        pull.authenticator = PasswordAuthorizer(DB_USERNAME, DB_PASSWORD)
+        pull.isContinuous = false
+        pull.start()
+        return pull
     }
 
     fun delete(id: String) {
         getDatabase().getDocument(id).delete()
     }
 
-    fun replicate() {
+    fun push(): Replication {
         val url = URL(DB_URL)
         val push = getDatabase().createPushReplication(url)
         push.authenticator = PasswordAuthorizer(DB_USERNAME, DB_PASSWORD)
         push.isContinuous = false
         push.start()
+        return push
     }
 
 }

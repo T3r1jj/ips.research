@@ -5,7 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorManager
 
-class MagneticSampler(context: Context) {
+class MagneticSampler(context: Context) : SensorSampler() {
     private val sensorManager = context.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     val magneticField = mutableListOf<SensorSample>()
     val gravity = mutableListOf<SensorSample>()
@@ -35,6 +35,9 @@ class MagneticSampler(context: Context) {
         sensorManager.registerListener(magnetometerListener, magnetometer, delay.sensorManagerDelay)
         val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         sensorManager.registerListener(gravitySensorListener, gravitySensor, delay.sensorManagerDelay)
+        if (sensorsInfo.isEmpty()) {
+            initSensorsInfo(magnetometer, gravitySensor)
+        }
     }
 
     fun stopSampling() {

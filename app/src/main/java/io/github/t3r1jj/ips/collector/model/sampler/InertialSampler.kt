@@ -4,45 +4,40 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
 
-class InertialSampler(context: Context) {
+class InertialSampler(context: Context) : SensorSampler() {
     private val sensorManager = context.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     val acceleration = mutableListOf<SensorSample>()
     val linearAcceleration = mutableListOf<SensorSample>()
-    val rotation = mutableListOf<SensorSample>()
-    val gravity = mutableListOf<SensorSample>()
 
     var isRunning = false
     val isEmpty: Boolean
         get() {
-            return acceleration.isEmpty() && linearAcceleration.isEmpty() && rotation.isEmpty()
+            return acceleration.isEmpty() && linearAcceleration.isEmpty()
         }
     var delay = SensorDelay.NORMAL
     private val accelerometerListener = SensorSampleEventListener(acceleration)
-    private val gravitySensorListener = SensorSampleEventListener(gravity)
     private val linearAccelerometerListener = SensorSampleEventListener(linearAcceleration)
-    private val gyroscopeListener = SensorSampleEventListener(rotation)
 
     fun startSampling() {
         isRunning = true
         acceleration.clear()
         linearAcceleration.clear()
-        rotation.clear()
         val linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         sensorManager.registerListener(linearAccelerometerListener, linearAccelerometer, delay.sensorManagerDelay)
-        val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
-        sensorManager.registerListener(gravitySensorListener, gravitySensor, delay.sensorManagerDelay)
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         sensorManager.registerListener(accelerometerListener, accelerometer, delay.sensorManagerDelay)
-        val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        sensorManager.registerListener(gyroscopeListener, gyroscope, delay.sensorManagerDelay)
+        if (sensorsInfo.isEmpty()) {
+            val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+            val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+            val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+            initSensorsInfo(accelerometer, linearAccelerometer, gravitySensor, gyroscope, magnetometer)
+        }
     }
 
     fun stopSampling() {
         isRunning = false
         sensorManager.unregisterListener(linearAccelerometerListener)
-        sensorManager.unregisterListener(gravitySensorListener)
         sensorManager.unregisterListener(accelerometerListener)
-        sensorManager.unregisterListener(gyroscopeListener)
     }
 
 }

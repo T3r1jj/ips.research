@@ -1,29 +1,24 @@
 package io.github.t3r1jj.ips.collector
 
 import android.R
-import android.graphics.Canvas
-import android.graphics.Color
+import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
+import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.Legend
-import com.github.mikephil.charting.components.YAxis
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.utils.ColorTemplate
 import io.github.t3r1jj.ips.collector.model.Dao
 import io.github.t3r1jj.ips.collector.model.data.InertialDataset
 import io.github.t3r1jj.ips.collector.model.sampler.InertialSampler
 import io.github.t3r1jj.ips.collector.model.sampler.SensorDelay
+import io.github.t3r1jj.ips.collector.view.RealtimeChart
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
@@ -33,52 +28,42 @@ import trikita.anvil.DSL.*
 
 
 class InertialActivity : AppCompatActivity() {
-    companion object {
-        const val CHARTING_FREQUENCY = 10f
-        val CHARTING_DELAY
-            get() = (1000 / CHARTING_FREQUENCY).toLong()
-    }
-
-    var movementType = InertialActivity.InertialMovementType.WALKING
+    var movementType = InertialDataset.InertialMovementType.WALKING
     var submitted = false
+    var stepsCount = 20
+    var dx = 0f
+    var dy = 0f
     lateinit var sampler: InertialSampler
     lateinit var accelerationChart: LineChart
+    lateinit var accelerationMagnitudeChart: LineChart
     lateinit var linearAccelerationChart: LineChart
-    lateinit var rotationChart: LineChart
-    private val visibleSampleCount = 100
-    var stepsCount = 100
+    lateinit var chartRenderer: RealtimeChart
 
-    var renderInitiator = Thread(RenderRunnable())
-
-    inner class RenderRunnable : Runnable {
-        override fun run() {
-            try {
-                while (!Thread.interrupted() && sampler.isRunning) {
-                    addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
-                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                    addChartEntry(linearAccelerationChart, sampler.gravity.lastOrNull()?.data
-                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                    addChartEntry(rotationChart, sampler.rotation.lastOrNull()?.data
-                            ?: arrayOf(0f, 0f, 0f).toFloatArray())
-                    Thread.sleep(CHARTING_DELAY)
-                }
-            } catch (e: InterruptedException) {
-            }
+    private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
+        override fun render(): Boolean {
+            chartRenderer.addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
+            chartRenderer.addChartEntry(accelerationMagnitudeChart, Math.sqrt((sampler.acceleration.lastOrNull()?.data
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
+            chartRenderer.addChartEntry(linearAccelerationChart, sampler.linearAcceleration.lastOrNull()?.data
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
+            return sampler.isRunning
         }
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        chartRenderer = RealtimeChartRenderer(this)
         sampler = InertialSampler(this)
-        val movementAdapter = ArrayAdapter<InertialMovementType>(this, R.layout.simple_spinner_item, InertialMovementType.values().toMutableList())
-        val delayAdapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
-        accelerationChart = createChart()
+        accelerationChart = chartRenderer.createChart(-15f, 15f)
         accelerationChart.description.text = "Acceleration (m/s^2 to s)"
-        linearAccelerationChart = createChart()
+        accelerationMagnitudeChart = chartRenderer.createChart(-15f, 15f)
+        accelerationMagnitudeChart.description.text = "Acceleration magnitude (m/s^2 to s)"
+        linearAccelerationChart = chartRenderer.createChart(-15f, 15f)
         linearAccelerationChart.description.text = "Linear acceleration (m/s^2 to s)"
-        rotationChart = createChart()
-        rotationChart.description.text = "Rotation (rad/s to s)"
+        val movementAdapter: Adapter = ArrayAdapter<InertialDataset.InertialMovementType>(this,
+                R.layout.simple_spinner_item, InertialDataset.InertialMovementType.values().toMutableList())
+        val delayAdapter: Adapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -101,8 +86,8 @@ class InertialActivity : AppCompatActivity() {
                             size(0, WRAP)
                             weight(1f)
                             adapter(movementAdapter)
-                            onItemSelected { a, v, pos, id ->
-                                movementType = a.selectedItem as InertialMovementType
+                            onItemSelected { a, _, _, _ ->
+                                movementType = a.selectedItem as InertialDataset.InertialMovementType
                             }
                         }
                     }
@@ -110,18 +95,53 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         DSL.orientation(HORIZONTAL)
                         textView {
-                            text("Steps count:")
+                            text("Steps:")
                             size(WRAP, WRAP)
                         }
                         editText {
-                            weight(1f)
+                            weight(0.3f)
                             size(0, WRAP)
                             text(stepsCount.toString())
+                            inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
                                 stepsCount = try {
                                     it.toString().toInt()
                                 } catch (nfe: NumberFormatException) {
                                     0
+                                }
+                            }
+                        }
+                        textView {
+                            text("dx[m]:")
+                            size(WRAP, WRAP)
+                        }
+                        editText {
+                            weight(0.3f)
+                            size(0, WRAP)
+                            text(dx.toString())
+                            inputType(InputType.TYPE_CLASS_NUMBER)
+                            onTextChanged {
+                                dx = try {
+                                    it.toString().toFloat()
+                                } catch (nfe: NumberFormatException) {
+                                    0f
+                                }
+                            }
+                        }
+                        textView {
+                            text("dy[m]:")
+                            size(WRAP, WRAP)
+                        }
+                        editText {
+                            weight(0.3f)
+                            size(0, WRAP)
+                            text(dy.toString())
+                            inputType(InputType.TYPE_CLASS_NUMBER)
+                            onTextChanged {
+                                dy = try {
+                                    it.toString().toFloat()
+                                } catch (nfe: NumberFormatException) {
+                                    0f
                                 }
                             }
                         }
@@ -137,7 +157,7 @@ class InertialActivity : AppCompatActivity() {
                             size(0, WRAP)
                             weight(1f)
                             adapter(delayAdapter)
-                            onItemSelected { a, v, pos, id ->
+                            onItemSelected { a, _, _, _ ->
                                 sampler.delay = a.selectedItem as SensorDelay
                             }
                         }
@@ -151,13 +171,12 @@ class InertialActivity : AppCompatActivity() {
                             text("Sample")
                             onClick {
                                 stopSampling()
-                                clearChart(accelerationChart)
-                                clearChart(linearAccelerationChart)
-                                clearChart(rotationChart)
+                                chartRenderer.clearChart(accelerationChart)
+                                chartRenderer.clearChart(accelerationMagnitudeChart)
+                                chartRenderer.clearChart(linearAccelerationChart)
                                 submitted = false
                                 sampler.startSampling()
-                                renderInitiator = Thread(RenderRunnable())
-                                renderInitiator.start()
+                                chartRenderer.startRendering()
                             }
                             weight(0.5f)
                         }
@@ -191,13 +210,13 @@ class InertialActivity : AppCompatActivity() {
                                 orientation(VERTICAL)
                                 weight(0.5f)
                                 size(MATCH, 0)
-                                customView(linearAccelerationChart)
+                                customView(accelerationMagnitudeChart)
                             }
                             linearLayout {
                                 orientation(VERTICAL)
                                 weight(0.5f)
                                 size(MATCH, 0)
-                                customView(rotationChart)
+                                customView(linearAccelerationChart)
                             }
                             size(MATCH, 0)
                             weight(1f)
@@ -209,10 +228,12 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("Submit")
                         onClick {
-                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration, sampler.rotation, sampler.gravity)
+                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration)
                             data.steps = stepsCount
-                            Dao(this@InertialActivity)
-                                    .save(data)
+                            data.dx = dx
+                            data.dy = dy
+                            data.sensors = sampler.sensorsInfo
+                            Dao(this@InertialActivity).save(data)
                             submitted = true
                         }
                         enabled(!sampler.isEmpty && !sampler.isRunning && !submitted)
@@ -225,7 +246,7 @@ class InertialActivity : AppCompatActivity() {
                 if (chart.parent is ViewGroup) {
                     (chart.parent as ViewGroup).removeView(chart)
                 }
-                Anvil.currentView<ViewGroup>().addView(chart, LayoutParams(MATCH, MATCH))
+                Anvil.currentView<ViewGroup>().addView(chart, ViewGroup.LayoutParams(MATCH, MATCH))
             }
         })
 
@@ -233,7 +254,7 @@ class InertialActivity : AppCompatActivity() {
 
     private fun stopSampling() {
         sampler.stopSampling()
-        renderInitiator.interrupt()
+        chartRenderer.stopRendering()
     }
 
     override fun onStop() {
@@ -241,94 +262,4 @@ class InertialActivity : AppCompatActivity() {
         stopSampling()
     }
 
-    private fun createChart(): LineChart {
-        val chart = object : LineChart(this) {
-            override fun onDraw(canvas: Canvas?) {
-                try {
-                    super.onDraw(canvas)
-                } catch (ex: IndexOutOfBoundsException) {
-                    Log.w("Charting", "IndexOutOfBoundsException")
-                } catch (ex: NegativeArraySizeException) {
-                    Log.w("Charting", "NegativeArraySizeException")
-                }
-            }
-        }
-        chart.description.isEnabled = true
-        chart.setTouchEnabled(true)
-        chart.isDragEnabled = true
-        chart.setScaleEnabled(true)
-        chart.setDrawGridBackground(false)
-        chart.setPinchZoom(true)
-        chart.setBackgroundColor(Color.LTGRAY)
-        val data = LineData()
-        data.setValueTextColor(Color.WHITE)
-        chart.data = data
-        val legend = chart.legend
-        legend.form = Legend.LegendForm.LINE
-        legend.textColor = Color.WHITE
-        val xAxis = chart.xAxis
-        xAxis.setDrawGridLines(false)
-        xAxis.setAvoidFirstLastClipping(true)
-        xAxis.isEnabled = true
-        val leftAxis = chart.axisLeft
-        leftAxis.axisMaximum = 15f
-        leftAxis.axisMinimum = -15f
-        leftAxis.setDrawGridLines(true)
-        val rightAxis = chart.axisRight
-        rightAxis.isEnabled = false
-        return chart
-    }
-
-    private fun clearChart(chart: LineChart) {
-        val data = chart.data
-        if (data != null) {
-            data.dataSets.clear()
-            data.notifyDataChanged()
-        }
-    }
-
-    private fun addChartEntry(chart: LineChart, values: FloatArray) {
-        val data = chart.data
-        if (data != null) {
-            for (index in 0 until values.size) {
-                var set = data.getDataSetByIndex(index)
-                if (set == null) {
-                    set = createSet(index)
-                    data.addDataSet(set)
-                }
-                val x = set.entryCount.toFloat() / CHARTING_FREQUENCY
-                data.addEntry(Entry(x, values[index]), index)
-                data.notifyDataChanged()
-                chart.notifyDataSetChanged()
-                chart.setVisibleXRangeMaximum(visibleSampleCount / CHARTING_FREQUENCY)
-                chart.moveViewToX(x)
-            }
-        }
-    }
-
-    private fun createSet(index: Int): LineDataSet {
-        val label = when (index) {
-            0 -> "X"
-            1 -> "Y"
-            else -> "Z"
-        }
-
-        val set = LineDataSet(null, label)
-        set.axisDependency = YAxis.AxisDependency.LEFT
-        set.color = ColorTemplate.MATERIAL_COLORS[index]
-        set.setCircleColor(ColorTemplate.MATERIAL_COLORS[index])
-        set.lineWidth = 1.5f
-        set.circleRadius = 2.0f
-        set.fillAlpha = 65
-        set.fillColor = ColorTemplate.MATERIAL_COLORS[index]
-        set.highLightColor = Color.rgb(255, 0, 0)
-        set.valueTextColor = Color.BLACK
-        set.valueTextSize = 9f
-        set.setDrawValues(false)
-        return set
-    }
-
-    enum class InertialMovementType {
-        WALKING, RUNNING, STAIRS_UP, STAIRS_DOWN, NONE
-    }
 }
