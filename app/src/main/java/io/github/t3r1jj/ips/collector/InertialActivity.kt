@@ -31,8 +31,7 @@ class InertialActivity : AppCompatActivity() {
     var movementType = InertialDataset.InertialMovementType.WALKING
     var submitted = false
     var stepsCount = 20
-    var dx = 0f
-    var dy = 0f
+    var displacement = 0f
     lateinit var sampler: InertialSampler
     lateinit var accelerationChart: LineChart
     lateinit var accelerationMagnitudeChart: LineChart
@@ -99,7 +98,7 @@ class InertialActivity : AppCompatActivity() {
                             size(WRAP, WRAP)
                         }
                         editText {
-                            weight(0.3f)
+                            weight(0.5f)
                             size(0, WRAP)
                             text(stepsCount.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
@@ -112,33 +111,16 @@ class InertialActivity : AppCompatActivity() {
                             }
                         }
                         textView {
-                            text("dx[m]:")
+                            text("Displacement [m]:")
                             size(WRAP, WRAP)
                         }
                         editText {
-                            weight(0.3f)
+                            weight(0.5f)
                             size(0, WRAP)
-                            text(dx.toString())
+                            text(displacement.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
-                                dx = try {
-                                    it.toString().toFloat()
-                                } catch (nfe: NumberFormatException) {
-                                    0f
-                                }
-                            }
-                        }
-                        textView {
-                            text("dy[m]:")
-                            size(WRAP, WRAP)
-                        }
-                        editText {
-                            weight(0.3f)
-                            size(0, WRAP)
-                            text(dy.toString())
-                            inputType(InputType.TYPE_CLASS_NUMBER)
-                            onTextChanged {
-                                dy = try {
+                                displacement = try {
                                     it.toString().toFloat()
                                 } catch (nfe: NumberFormatException) {
                                     0f
@@ -230,8 +212,7 @@ class InertialActivity : AppCompatActivity() {
                         onClick {
                             val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration)
                             data.steps = stepsCount
-                            data.dx = dx
-                            data.dy = dy
+                            data.displacement = displacement
                             data.sensors = sampler.sensorsInfo
                             Dao(this@InertialActivity).save(data)
                             submitted = true

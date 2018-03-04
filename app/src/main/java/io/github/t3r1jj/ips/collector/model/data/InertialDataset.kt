@@ -10,13 +10,12 @@ data class InertialDataset @JsonCreator constructor(@JsonProperty("movementType"
     : SensorDataset(DatasetType.INERTIAL) {
 
     override fun toString(): String {
-        return super.toString() + labelled(", steps: ", steps) + labelled(", dx[m]: ", dx) + labelled(", dy[m]: ", dy) + ", samples: " +
+        return super.toString() + labelled(", steps: ", steps) + labelled(", displacement [m]: ", displacement) + ", samples: " +
                 (acceleration.size + linearAcceleration.size).toString()
     }
 
     var steps = 0
-    var dx = 0f
-    var dy = 0f
+    var displacement = 0f
 
     private fun labelled(label: String, value: Number): String {
         return if (value != 0f) {
