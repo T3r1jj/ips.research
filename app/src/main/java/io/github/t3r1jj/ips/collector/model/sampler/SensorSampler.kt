@@ -6,10 +6,13 @@ import android.util.Log
 open class SensorSampler {
     var sensorsInfo = ""
 
-    protected fun initSensorsInfo(vararg sensors: Sensor) {
+    protected fun initSensorsInfo(vararg sensors: Sensor?) {
         val sb = StringBuilder()
         var prefix = ""
         for (sensor in sensors) {
+            if (sensor == null) {
+                continueg
+            }
             sb.append(prefix)
             sensorInfo(sensor, sb)
             prefix = "; "
