@@ -11,7 +11,7 @@ open class SensorSampler {
         var prefix = ""
         for (sensor in sensors) {
             if (sensor == null) {
-                continueg
+                continue
             }
             sb.append(prefix)
             sensorInfo(sensor, sb)
