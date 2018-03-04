@@ -57,7 +57,7 @@ class InertialActivity : AppCompatActivity() {
         sampler = InertialSampler(this)
         accelerationChart = chartRenderer.createChart(-15f, 15f)
         accelerationChart.description.text = "Acceleration (m/s^2 to s)"
-        accelerationMagnitudeChart = chartRenderer.createChart(-15f, 15f)
+        accelerationMagnitudeChart = chartRenderer.createChart(0f, 30f)
         accelerationMagnitudeChart.description.text = "Acceleration magnitude (m/s^2 to s)"
         linearAccelerationChart = chartRenderer.createChart(-15f, 15f)
         linearAccelerationChart.description.text = "Linear acceleration (m/s^2 to s)"
