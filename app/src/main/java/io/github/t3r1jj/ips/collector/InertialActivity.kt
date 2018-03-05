@@ -210,7 +210,7 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("Submit")
                         onClick {
-                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration)
+                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration, sampler.magneticField, sampler.gravity)
                             data.steps = stepsCount
                             data.displacement = displacement
                             data.sensors = sampler.sensorsInfo

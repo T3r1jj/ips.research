@@ -6,12 +6,14 @@ import io.github.t3r1jj.ips.collector.model.sampler.SensorSample
 
 data class InertialDataset @JsonCreator constructor(@JsonProperty("movementType") val movementType: InertialMovementType,
                                                     @JsonProperty("acceleration") val acceleration: List<SensorSample>,
-                                                    @JsonProperty("linearAcceleration") val linearAcceleration: List<SensorSample>)
+                                                    @JsonProperty("linearAcceleration") val linearAcceleration: List<SensorSample>,
+                                                    @JsonProperty("magneticField") val magneticField: List<SensorSample>,
+                                                    @JsonProperty("gravity") val gravity: List<SensorSample>)
     : SensorDataset(DatasetType.INERTIAL) {
 
     override fun toString(): String {
         return super.toString() + labelled(", steps: ", steps) + labelled(", displacement [m]: ", displacement) + ", samples: " +
-                (acceleration.size + linearAcceleration.size).toString()
+                (acceleration.size + linearAcceleration.size + magneticField.size + gravity.size).toString()
     }
 
     var steps = 0
