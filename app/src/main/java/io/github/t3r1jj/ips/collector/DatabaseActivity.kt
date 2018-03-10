@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.widget.Adapter
 import android.widget.LinearLayout.VERTICAL
 import android.widget.Toast
 import com.couchbase.lite.replicator.Replication
@@ -37,6 +38,7 @@ class DatabaseActivity : AppCompatActivity() {
     private var loadingCheckThread: Thread? = null
     private var uploadingCheckThread: Thread? = null
     private var dialog: FilePickerDialog? = null
+    private lateinit var dbAdapter: Adapter
 
     val dao: Dao by lazy {
         Dao(this)
@@ -44,7 +46,7 @@ class DatabaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        recreateAdapter()
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -54,22 +56,7 @@ class DatabaseActivity : AppCompatActivity() {
                     listView {
                         size(MATCH, MATCH)
                         weight(1f)
-                        adapter(RenderableAdapter.withItems(dao.findAll().map { it.key to it.value }, { _, item ->
-                            linearLayout {
-                                padding(dip(20))
-                                textView {
-                                    text(item.second.toString())
-                                    onLongClick {
-                                        openRemovalDialog(item)
-                                        true
-                                    }
-                                }
-                                onLongClick {
-                                    openRemovalDialog(item)
-                                    true
-                                }
-                            }
-                        }))
+                        adapter(dbAdapter)
                     }
                     button {
                         size(MATCH, WRAP)
@@ -82,10 +69,10 @@ class DatabaseActivity : AppCompatActivity() {
                                             showFileChooser()
                                         }
                                     }).setNegativeButton("Remote database", { _, which ->
-                                        if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                            loadFromRemote()
-                                        }
-                                    }).show()
+                                if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                    loadFromRemote()
+                                }
+                            }).show()
                         }
                     }
                     button {
@@ -97,10 +84,11 @@ class DatabaseActivity : AppCompatActivity() {
                                     .setPositiveButton("Yes", { _, which ->
                                         if (which == DialogInterface.BUTTON_POSITIVE) {
                                             dao.clear()
+                                            recreateAdapter()
                                             Anvil.render()
                                         }
                                     }).setNegativeButton("No", { _, _ ->
-                                    }).show()
+                            }).show()
                         }
                     }
 
@@ -115,10 +103,18 @@ class DatabaseActivity : AppCompatActivity() {
                                             saveDataToDevice()
                                         }
                                     }).setNegativeButton("Remote database", { _, which ->
-                                        if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                            saveDataToRemote()
-                                        }
-                                    }).show()
+                                if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                    saveDataToRemote()
+                                }
+                            }).show()
+
+                        }
+                    }
+
+                    button {
+                        size(MATCH, WRAP)
+                        text("To ARFF")
+                        onClick {
 
                         }
                     }
@@ -131,6 +127,25 @@ class DatabaseActivity : AppCompatActivity() {
             }
         })
 
+    }
+
+    private fun recreateAdapter() {
+        dbAdapter = RenderableAdapter.withItems(dao.findAll().map { it.key to it.value }, { _, item ->
+            linearLayout {
+                padding(dip(20))
+                textView {
+                    text(item.second.toString())
+                    onLongClick {
+                        openRemovalDialog(item)
+                        true
+                    }
+                }
+                onLongClick {
+                    openRemovalDialog(item)
+                    true
+                }
+            }
+        })
     }
 
     private fun loadFromRemote() {
@@ -154,17 +169,20 @@ class DatabaseActivity : AppCompatActivity() {
         }
     }
 
-    private fun createAndStartCheckThread(oldThread: Thread?, push: Replication, text: String): Thread {
+    private fun createAndStartCheckThread(oldThread: Thread?, replication: Replication, text: String): Thread {
         if (oldThread != null) {
             oldThread.interrupt()
             oldThread.join()
         }
         val thread = Thread({
             try {
-                while (push.isRunning) {
+                while (replication.isRunning) {
                     Thread.sleep(1000)
                 }
-                Anvil.render()
+                if (replication.isPull) {
+                    recreateAdapter()
+                    Anvil.render()
+                }
                 runOnUiThread {
                     Toast.makeText(this@DatabaseActivity, text, Toast.LENGTH_LONG).show()
                 }
@@ -199,7 +217,7 @@ class DatabaseActivity : AppCompatActivity() {
                         Anvil.render()
                     }
                 }).setNegativeButton("No", { _, _ ->
-                }).show()
+        }).show()
     }
 
     private fun isExternalStorageWritable(): Boolean {
@@ -245,6 +263,7 @@ class DatabaseActivity : AppCompatActivity() {
         dialog!!.setTitle("Select a IPS json data file")
         dialog!!.setDialogSelectionListener {
             dao.saveAll(File(it[0]))
+            recreateAdapter()
             Anvil.render()
         }
         dialog!!.show()
