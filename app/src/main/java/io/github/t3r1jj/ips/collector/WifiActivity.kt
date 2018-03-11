@@ -139,6 +139,7 @@ class WifiActivity : AppCompatActivity() {
                                 Toast.makeText(this@WifiActivity, "Please provide a place name for classification", Toast.LENGTH_LONG).show()
                             } else {
                                 val data = WifiDataset(place, sampler.fingerprints)
+                                data.iterations = sampler.sampleIndex
                                 Dao(this@WifiActivity)
                                         .save(data)
                                 submitted = true

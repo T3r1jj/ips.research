@@ -18,8 +18,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
+import io.github.t3r1jj.ips.collector.model.ArffTransform
 import io.github.t3r1jj.ips.collector.model.Dao
 import io.github.t3r1jj.ips.collector.model.data.Dataset
+import io.github.t3r1jj.ips.collector.model.data.DatasetType
+import io.github.t3r1jj.ips.collector.model.data.WifiDataset
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
@@ -115,7 +118,26 @@ class DatabaseActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("To ARFF")
                         onClick {
+                            if (!isExternalStorageWritable()) {
+                                Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                            } else {
+                                val aff = ArffTransform(Regex("(eduroam|dziekanat|pb-guest|.*hotsspot.*)", RegexOption.IGNORE_CASE))
+                                aff.apply(dao.findAll().values
+                                        .filter { it.type == DatasetType.WIFI }
+                                        .map { it as WifiDataset })
 
+                                try {
+                                    var file: File? = null
+                                    for (device in aff.devices) {
+                                        val fileName = "ips.data." + device.replace(" ", "_") + ".arff"
+                                        file = getPublicDownloadStorageFile(fileName)
+                                        aff.writeToFile(file.outputStream(), device)
+                                    }
+                                    Toast.makeText(this@DatabaseActivity, "Saved json file to: " + file?.absolutePath, Toast.LENGTH_LONG).show()
+                                } catch (ex: RuntimeException) {
+                                    Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+                                }
+                            }
                         }
                     }
                 }
@@ -130,7 +152,10 @@ class DatabaseActivity : AppCompatActivity() {
     }
 
     private fun recreateAdapter() {
-        dbAdapter = RenderableAdapter.withItems(dao.findAll().map { it.key to it.value }, { _, item ->
+        dbAdapter = RenderableAdapter.withItems(dao.findAll()
+                .toList()
+                .sortedBy { it.second.timestamp }
+                .map { it.first to it.second }, { _, item ->
             linearLayout {
                 padding(dip(20))
                 textView {
