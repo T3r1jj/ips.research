@@ -32,5 +32,10 @@ class MainActivity : AppCompatActivity() {
                     Intent(this, DatabaseActivity::class.java)
             )
         }
+        test_button.setOnClickListener {
+            startActivity(
+                    Intent(this, OnlineActivity::class.java)
+            )
+        }
     }
 }

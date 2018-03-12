@@ -141,9 +141,7 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
                     Thread.sleep(CHARTING_DELAY)
                 }
                 Anvil.render()
-                println("stoooooooooooooooop")
             } catch (e: InterruptedException) {
-                println("stoooooooooooooooop")
             }
         })
         renderInitiator!!.start()

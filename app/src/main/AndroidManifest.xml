@@ -45,6 +45,10 @@
             android:name=".DatabaseActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="Collected Data" />
+        <activity
+            android:name=".OnlineActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="Online model test" />
     </application>
 
 </manifest>

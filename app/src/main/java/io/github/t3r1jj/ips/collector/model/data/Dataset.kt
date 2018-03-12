@@ -19,8 +19,8 @@ open class Dataset(val type: DatasetType) {
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
         private fun getDeviceName(): String {
-            val manufacturer = Build.MANUFACTURER
-            val model = Build.MODEL
+            val manufacturer = Build.MANUFACTURER ?: "UNKNOWN MANUFACTURER"
+            val model = Build.MODEL ?: "UNKNOWN MODEL"
             return if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
                 capitalize(model)
             } else {

@@ -1,6 +1,7 @@
 package io.github.t3r1jj.ips.collector
 
 import android.Manifest
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
@@ -10,21 +11,22 @@ import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.widget.Adapter
+import android.widget.*
+import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
-import android.widget.Toast
 import com.couchbase.lite.replicator.Replication
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
-import io.github.t3r1jj.ips.collector.model.ArffTransform
 import io.github.t3r1jj.ips.collector.model.Dao
+import io.github.t3r1jj.ips.collector.model.algorithm.ArffTransform
 import io.github.t3r1jj.ips.collector.model.data.Dataset
 import io.github.t3r1jj.ips.collector.model.data.DatasetType
 import io.github.t3r1jj.ips.collector.model.data.WifiDataset
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
+import trikita.anvil.BaseDSL
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL.*
@@ -42,6 +44,7 @@ class DatabaseActivity : AppCompatActivity() {
     private var uploadingCheckThread: Thread? = null
     private var dialog: FilePickerDialog? = null
     private lateinit var dbAdapter: Adapter
+    private var arffDialog: Dialog? = null
 
     val dao: Dao by lazy {
         Dao(this)
@@ -120,23 +123,10 @@ class DatabaseActivity : AppCompatActivity() {
                         onClick {
                             if (!isExternalStorageWritable()) {
                                 Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                            } else if (dao.findAll().isEmpty()) {
+                                Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
                             } else {
-                                val aff = ArffTransform(Regex("(eduroam|dziekanat|pb-guest|.*hotspot.*)", RegexOption.IGNORE_CASE))
-                                aff.apply(dao.findAll().values
-                                        .filter { it.type == DatasetType.WIFI }
-                                        .map { it as WifiDataset })
-
-                                try {
-                                    var file: File? = null
-                                    for (device in aff.devices) {
-                                        val fileName = "ips.data." + device.replace(" ", "_") + ".arff"
-                                        file = getPublicDownloadStorageFile(fileName)
-                                        aff.writeToFile(file.outputStream(), device)
-                                    }
-                                    Toast.makeText(this@DatabaseActivity, "Saved json file to: " + file?.absolutePath, Toast.LENGTH_LONG).show()
-                                } catch (ex: RuntimeException) {
-                                    Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
-                                }
+                                arffDialog = AlertDialog.Builder(context).setView(ArffDialog()).show()
                             }
                         }
                     }
@@ -149,6 +139,161 @@ class DatabaseActivity : AppCompatActivity() {
             }
         })
 
+    }
+
+    inner class ArffDialog : RenderableView(this) {
+        private val arrayAdapter = ArrayAdapter<String>(context,
+                R.layout.support_simple_spinner_dropdown_item,
+                dao.findAll().values.map { it.device }.distinct().sorted())
+        private val firstRegex = "(eduroam)"
+        private val secondRegex = "(eduroam|dziekanat|pb-guest|.*hotspot.*)"
+        private var isFirstSwitchOn = true
+        private var isSecondSwitchOn = false
+        private var isThirdSwitchOn = false
+        private var customRegex = ""
+        private var device = arrayAdapter.getItem(0)
+
+        override fun view() {
+            linearLayout {
+                padding(dip(8))
+                size(MATCH, MATCH)
+                orientation(VERTICAL)
+                textView {
+                    padding(dip(8))
+                    size(MATCH, WRAP)
+                    text("Transform WiFi data into ARFF for Weka manual research")
+                }
+                textView {
+                    padding(dip(8))
+                    size(MATCH, WRAP)
+                    text("SSID regex:")
+                }
+                radioGroup {
+                    radioButton {
+                        padding(dip(8))
+                        size(WRAP, WRAP)
+                        text(firstRegex)
+                        checked(isFirstSwitchOn)
+                        onCheckedChange { c: CompoundButton?, b: Boolean ->
+                            isFirstSwitchOn = b
+                        }
+                    }
+                    radioButton {
+                        padding(dip(8))
+                        size(WRAP, WRAP)
+                        text(secondRegex)
+                        checked(isSecondSwitchOn)
+                        onCheckedChange { c: CompoundButton?, b: Boolean ->
+                            isSecondSwitchOn = b
+                        }
+                    }
+                    radioButton {
+                        padding(dip(8))
+                        size(WRAP, WRAP)
+                        text("Custom (Java regex, fill in below):")
+                        checked(isThirdSwitchOn)
+                        onCheckedChange { c: CompoundButton?, b: Boolean ->
+                            isThirdSwitchOn = b
+                        }
+                    }
+                    linearLayout {
+                        BaseDSL.size(MATCH, WRAP)
+                        orientation(HORIZONTAL)
+                        editText {
+                            padding(dip(8))
+                            size(0, WRAP)
+                            BaseDSL.weight(1f)
+                            onTextChanged {
+                                customRegex = it.toString()
+                            }
+                        }
+                    }
+                }
+                linearLayout {
+                    padding(dip(8))
+                    BaseDSL.size(MATCH, WRAP)
+                    orientation(HORIZONTAL)
+                    textView {
+                        size(MATCH, WRAP)
+                        text("Training dataset from device (the rest will be testing):")
+                    }
+                }
+                spinner {
+                    padding(dip(8))
+                    size(MATCH, WRAP)
+                    adapter(arrayAdapter)
+                    onItemSelected { a, _, _, _ ->
+                        device = a.selectedItem.toString()
+                    }
+                }
+                linearLayout {
+                    BaseDSL.size(MATCH, WRAP)
+                    orientation(HORIZONTAL)
+                    button {
+                        size(0, WRAP)
+                        text("Generate")
+                        onClick {
+                            generateArff()
+                        }
+                        BaseDSL.weight(1f)
+                    }
+
+                    button {
+                        size(0, WRAP)
+                        text("Cancel")
+                        onClick {
+                            arffDialog?.dismiss()
+                        }
+                        BaseDSL.weight(1f)
+                    }
+                }
+            }
+        }
+
+        private fun generateArff() {
+            val regex = when {
+                isFirstSwitchOn -> firstRegex
+                isSecondSwitchOn -> secondRegex
+                else -> customRegex
+            }
+            val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
+            val wifiData = dao.findAll().values
+                    .filter { it.type == DatasetType.WIFI }
+                    .map { it as WifiDataset }
+            aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
+            try {
+                var file: File?
+                val filePaths = mutableListOf<String>()
+                for (device in aff.testDevices) {
+                    val fileName = "ips.wifi.test." + formatFileName(device) + ".arff"
+                    file = getPublicDownloadStorageFile(fileName)
+                    aff.writeToFile(file.outputStream(), device)
+                    filePaths.add(file.absolutePath)
+                }
+                val fileName = "ips.wifi." + formatFileName(aff.trainDevices) + ".arff"
+                file = getPublicDownloadStorageFile(fileName)
+                aff.writeToFile(file.outputStream(), aff.trainDevices)
+                filePaths.add(file.absolutePath)
+                Toast.makeText(this@DatabaseActivity, "Generated ARFF files to: " + filePaths.joinToString("\n", "\n"), Toast.LENGTH_LONG).show()
+            } catch (ex: Exception) {
+                Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+            }
+        }
+
+        private fun formatFileName(name: String): String {
+            return name
+                    .replace(" ", "-")
+                    .replace(",", "_")
+                    .substring(0, Math.min(60, name.length))
+        }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (arffDialog?.isShowing == true) {
+            arffDialog?.dismiss()
+        }
     }
 
     private fun recreateAdapter() {
@@ -298,7 +443,7 @@ class DatabaseActivity : AppCompatActivity() {
         when (requestCode) {
             EXTERNAL_PERMISSION_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    saveDataToDevice()
+                    Toast.makeText(this@DatabaseActivity, "Please repeat the last action", Toast.LENGTH_LONG).show()
                 } else {
                     Toast.makeText(this@DatabaseActivity, "Please grant the permission to use external storage in order to save the data to json file", Toast.LENGTH_LONG).show()
                 }

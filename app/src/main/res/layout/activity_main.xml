@@ -81,6 +81,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1" />
+
+                <Button
+                    android:id="@+id/test_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_weight="0.1"
+                    android:text="Test model online"
+                    android:textSize="18sp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_weight="0.1" />
             </LinearLayout>
         </RelativeLayout>
 
