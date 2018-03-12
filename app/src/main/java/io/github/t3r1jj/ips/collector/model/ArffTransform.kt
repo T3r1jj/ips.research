@@ -8,7 +8,7 @@ import java.io.FileOutputStream
 import java.io.PrintWriter
 import java.util.*
 
-class ArffTransform(private val attributeRegex: Regex) {
+class ArffTransform(private val ssidRegex: Regex) {
 
     val attributes = LinkedHashSet<String>()
     val classes = mutableSetOf<String>()
@@ -19,7 +19,9 @@ class ArffTransform(private val attributeRegex: Regex) {
     lateinit var type: String
 
     companion object {
-        const val NO_SIGNAL = -100
+        private const val NO_SIGNAL = -100
+        private const val ADD_UNKNOWN = false
+        private const val UNKNOWN_PLACE = "UNKNOWN"
     }
 
     fun apply(dataset: Iterable<WifiDataset>) {
@@ -33,13 +35,13 @@ class ArffTransform(private val attributeRegex: Regex) {
             startTimestamp = Math.min(startTimestamp, it.timestamp)
             endTimestamp = Math.max(endTimestamp, it.timestamp)
             it.fingerprints
-                    .filter { it.ssid.matches(attributeRegex) }
+                    .filter { it.ssid.matches(ssidRegex) }
                     .forEach {
                         attributes.add(it.bssid)
                     }
         }
         dataset.forEach { data ->
-            var datasetObjects = mutableListOf<String>()
+            val datasetObjects = mutableListOf<String>()
             var attributeValues = mutableMapOf<String, Int>()
             var lastTimestamp = 0L
             var index = 0
@@ -60,14 +62,14 @@ class ArffTransform(private val attributeRegex: Regex) {
                 datasetObjects.add(toObject(mutableMapOf(), data.place).toString())
             }
             if (!data.device.contains("Combo")) {
-                val sums = mutableListOf<Double>()
+                val sums = mutableListOf<Int>()
                 for (obj in datasetObjects) {
                     val values = obj.split(",")
                     for (i in 0 until values.size - 1) {
                         try {
-                            sums[i] += values[i].toDouble()
+                            sums[i] += values[i].toInt()
                         } catch (ex: java.lang.IndexOutOfBoundsException) {
-                            sums.add(values[i].toDouble())
+                            sums.add(values[i].toInt())
                         }
                     }
                 }
@@ -78,6 +80,20 @@ class ArffTransform(private val attributeRegex: Regex) {
             } else {
                 objects[data.device]!!.addAll(datasetObjects)
             }
+        }
+
+        if (ADD_UNKNOWN) {
+            devices.forEach {
+                if (it.contains("Combo")) {
+                    val avgObjectsPerClass = objects[it]!!.size / classes.size
+                    for (i in 0 until avgObjectsPerClass) {
+                        objects[it]!!.add(toObject(mutableMapOf(), UNKNOWN_PLACE).toString())
+                    }
+                } else {
+                    objects[it]!!.add(toObject(mutableMapOf(), UNKNOWN_PLACE).toString())
+                }
+            }
+            classes.add(UNKNOWN_PLACE)
         }
     }
 
@@ -92,7 +108,7 @@ class ArffTransform(private val attributeRegex: Regex) {
             val value = attributeValues[it] ?: NO_SIGNAL
             objectBuilder
                     .append(prefix)
-                    .append(toMicroMWatt(value.toDouble()))
+                    .append(dBmToDecyPikoWatts(value.toDouble()))
             prefix = ","
         }
         objectBuilder
@@ -101,17 +117,8 @@ class ArffTransform(private val attributeRegex: Regex) {
         return objectBuilder
     }
 
-    fun toMicroMWatt(dbm: Double): Double {
-        return Math.pow(10.toDouble(), (dbm + 60) / 10)
-    }
-
-
-    fun rssQuality(dBm: Int): Int {
-        return when {
-            dBm <= -100 -> 0
-            dBm >= -50 -> 100
-            else -> 2 * (dBm + 100)
-        }
+    private fun dBmToDecyPikoWatts(dBm: Double): Int {
+        return Math.pow(10.toDouble(), (dBm + 100) / 10).toInt()
     }
 
     fun writeToFile(outputStream: FileOutputStream, device: String) {
@@ -120,7 +127,9 @@ class ArffTransform(private val attributeRegex: Regex) {
         writer.println("% Data type: " + type)
         writer.println("% Data collecting start: " + Dataset.dateFormatter.format(Date(startTimestamp)))
         writer.println("% Data collecting end: " + Dataset.dateFormatter.format(Date(endTimestamp)))
-        writer.println("% Devices: " + Arrays.toString(devices.toTypedArray()))
+        writer.println("% Attributes from devices: " + Arrays.toString(devices.toTypedArray()))
+        writer.println("% Device data: " + device)
+        writer.println("% SSID regex: " + ssidRegex.pattern)
 
         writer.println("@RELATION " + type)
         writer.println()
@@ -128,7 +137,7 @@ class ArffTransform(private val attributeRegex: Regex) {
             writer.println("@ATTRIBUTE " + attribute + " NUMERIC")
         }
         writer.println()
-        writer.println("@ATTRIBUTE place " + classes.joinToString(",", "{", "}"));
+        writer.println("@ATTRIBUTE place " + classes.sorted().joinToString(",", "{", "}"));
         writer.println()
         writer.println("@Data")
         objects[device]!!.forEach(writer::println)

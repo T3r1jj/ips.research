@@ -121,7 +121,7 @@ class DatabaseActivity : AppCompatActivity() {
                             if (!isExternalStorageWritable()) {
                                 Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
                             } else {
-                                val aff = ArffTransform(Regex("(eduroam|dziekanat|pb-guest|.*hotsspot.*)", RegexOption.IGNORE_CASE))
+                                val aff = ArffTransform(Regex("(eduroam|dziekanat|pb-guest|.*hotspot.*)", RegexOption.IGNORE_CASE))
                                 aff.apply(dao.findAll().values
                                         .filter { it.type == DatasetType.WIFI }
                                         .map { it as WifiDataset })
