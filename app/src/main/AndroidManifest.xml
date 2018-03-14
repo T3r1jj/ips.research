@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -18,8 +18,8 @@
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait"
-            android:label="IPS Collector Module">
+            android:label="IPS Collector Module"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,16 +29,19 @@
         <activity
             android:name=".InertialActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:keepScreenOn="true"
             android:label="Inertial Sampling"
             android:screenOrientation="portrait" />
         <activity
             android:name=".WifiActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:keepScreenOn="true"
             android:label="Wifi Fingerprinting"
             android:screenOrientation="portrait" />
         <activity
             android:name=".MagneticActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:keepScreenOn="true"
             android:label="Magnetic Sampling/Fingerprinting"
             android:screenOrientation="portrait" />
         <activity
@@ -48,6 +51,7 @@
         <activity
             android:name=".OnlineActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:keepScreenOn="true"
             android:label="Online model test" />
     </application>
 
