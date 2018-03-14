@@ -2,18 +2,15 @@ package io.github.t3r1jj.ips.collector.model.data
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.github.t3r1jj.ips.collector.model.sampler.SensorSample
+import io.github.t3r1jj.ips.collector.model.collector.SensorSample
 
 data class InertialDataset @JsonCreator constructor(@JsonProperty("movementType") val movementType: InertialMovementType,
-                                                    @JsonProperty("acceleration") val acceleration: List<SensorSample>,
-                                                    @JsonProperty("linearAcceleration") val linearAcceleration: List<SensorSample>,
-                                                    @JsonProperty("magneticField") val magneticField: List<SensorSample>,
-                                                    @JsonProperty("gravity") val gravity: List<SensorSample>)
+                                                    @JsonProperty("acceleration") val acceleration: List<SensorSample>)
     : SensorDataset(DatasetType.INERTIAL) {
 
     override fun toString(): String {
         return super.toString() + labelled(", steps: ", steps) + labelled(", displacement [m]: ", displacement) + ", samples: " +
-                (acceleration.size + linearAcceleration.size + magneticField.size + gravity.size).toString()
+                acceleration.size
     }
 
     var steps = 0

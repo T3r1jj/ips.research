@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import io.github.t3r1jj.ips.collector.model.Dao
 import io.github.t3r1jj.ips.collector.model.data.WifiDataset
-import io.github.t3r1jj.ips.collector.model.sampler.WifiSampler
+import io.github.t3r1jj.ips.collector.model.collector.WifiSampler
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP

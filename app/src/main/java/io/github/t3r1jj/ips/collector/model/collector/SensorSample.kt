@@ -1,4 +1,4 @@
-package io.github.t3r1jj.ips.collector.model.sampler
+package io.github.t3r1jj.ips.collector.model.collector
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty

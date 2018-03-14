@@ -2,7 +2,7 @@ package io.github.t3r1jj.ips.collector.model.data
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.github.t3r1jj.ips.collector.model.sampler.SensorSample
+import io.github.t3r1jj.ips.collector.model.collector.SensorSample
 
 data class MagneticDataset @JsonCreator constructor(@JsonProperty("route") val route: String,
                                                     @JsonProperty("magneticField") val magneticField: List<SensorSample>,

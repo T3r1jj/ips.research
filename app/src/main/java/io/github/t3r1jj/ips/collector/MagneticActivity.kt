@@ -15,8 +15,8 @@ import android.widget.Toast
 import com.github.mikephil.charting.charts.LineChart
 import io.github.t3r1jj.ips.collector.model.Dao
 import io.github.t3r1jj.ips.collector.model.data.MagneticDataset
-import io.github.t3r1jj.ips.collector.model.sampler.MagneticSampler
-import io.github.t3r1jj.ips.collector.model.sampler.SensorDelay
+import io.github.t3r1jj.ips.collector.model.collector.MagneticSampler
+import io.github.t3r1jj.ips.collector.model.collector.SensorDelay
 import io.github.t3r1jj.ips.collector.view.RealtimeChart
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
@@ -188,6 +188,7 @@ class MagneticActivity : AppCompatActivity() {
                                 Toast.makeText(this@MagneticActivity, "Please provide a route name for classification", Toast.LENGTH_LONG).show()
                             } else {
                                 val data = MagneticDataset(route, sampler.magneticField, sampler.gravity)
+                                data.sensorDelay = sampler.delay
                                 data.sensors = sampler.sensorsInfo
                                 Dao(this@MagneticActivity).save(data)
                                 submitted = true

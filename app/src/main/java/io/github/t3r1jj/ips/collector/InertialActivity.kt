@@ -15,9 +15,9 @@ import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
 import com.github.mikephil.charting.charts.LineChart
 import io.github.t3r1jj.ips.collector.model.Dao
+import io.github.t3r1jj.ips.collector.model.collector.InertialSampler
+import io.github.t3r1jj.ips.collector.model.collector.SensorDelay
 import io.github.t3r1jj.ips.collector.model.data.InertialDataset
-import io.github.t3r1jj.ips.collector.model.sampler.InertialSampler
-import io.github.t3r1jj.ips.collector.model.sampler.SensorDelay
 import io.github.t3r1jj.ips.collector.view.RealtimeChart
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
@@ -35,7 +35,6 @@ class InertialActivity : AppCompatActivity() {
     lateinit var sampler: InertialSampler
     lateinit var accelerationChart: LineChart
     lateinit var accelerationMagnitudeChart: LineChart
-    lateinit var linearAccelerationChart: LineChart
     lateinit var chartRenderer: RealtimeChart
 
     private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
@@ -44,8 +43,6 @@ class InertialActivity : AppCompatActivity() {
                     ?: arrayOf(0f, 0f, 0f).toFloatArray())
             chartRenderer.addChartEntry(accelerationMagnitudeChart, Math.sqrt((sampler.acceleration.lastOrNull()?.data
                     ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
-            chartRenderer.addChartEntry(linearAccelerationChart, sampler.linearAcceleration.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
             return sampler.isRunning
         }
     }
@@ -58,8 +55,6 @@ class InertialActivity : AppCompatActivity() {
         accelerationChart.description.text = "Acceleration (m/s^2 to s)"
         accelerationMagnitudeChart = chartRenderer.createChart(0f, 30f)
         accelerationMagnitudeChart.description.text = "Acceleration magnitude (m/s^2 to s)"
-        linearAccelerationChart = chartRenderer.createChart(-15f, 15f)
-        linearAccelerationChart.description.text = "Linear acceleration (m/s^2 to s)"
         val movementAdapter: Adapter = ArrayAdapter<InertialDataset.InertialMovementType>(this,
                 R.layout.simple_spinner_item, InertialDataset.InertialMovementType.values().toMutableList())
         val delayAdapter: Adapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
@@ -155,7 +150,6 @@ class InertialActivity : AppCompatActivity() {
                                 stopSampling()
                                 chartRenderer.clearChart(accelerationChart)
                                 chartRenderer.clearChart(accelerationMagnitudeChart)
-                                chartRenderer.clearChart(linearAccelerationChart)
                                 submitted = false
                                 sampler.startSampling()
                                 chartRenderer.startRendering()
@@ -194,12 +188,6 @@ class InertialActivity : AppCompatActivity() {
                                 size(MATCH, 0)
                                 customView(accelerationMagnitudeChart)
                             }
-                            linearLayout {
-                                orientation(VERTICAL)
-                                weight(0.5f)
-                                size(MATCH, 0)
-                                customView(linearAccelerationChart)
-                            }
                             size(MATCH, 0)
                             weight(1f)
                         }
@@ -210,7 +198,8 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text("Submit")
                         onClick {
-                            val data = InertialDataset(movementType, sampler.acceleration, sampler.linearAcceleration, sampler.magneticField, sampler.gravity)
+                            val data = InertialDataset(movementType, sampler.acceleration)
+                            data.sensorDelay = sampler.delay
                             data.steps = stepsCount
                             data.displacement = displacement
                             data.sensors = sampler.sensorsInfo

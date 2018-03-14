@@ -1,4 +1,4 @@
-package io.github.t3r1jj.ips.collector.model.sampler
+package io.github.t3r1jj.ips.collector.model.collector
 
 import android.content.Context
 import android.hardware.Sensor
@@ -35,8 +35,11 @@ class MagneticSampler(context: Context) : SensorSampler() {
         sensorManager.registerListener(magnetometerListener, magnetometer, delay.sensorManagerDelay)
         val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         sensorManager.registerListener(gravitySensorListener, gravitySensor, delay.sensorManagerDelay)
+        val linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (sensorsInfo.isEmpty()) {
-            initSensorsInfo(magnetometer, gravitySensor)
+            val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+            initSensorsInfo(accelerometer, linearAccelerometer, gravitySensor, gyroscope, magnetometer)
         }
     }
 
