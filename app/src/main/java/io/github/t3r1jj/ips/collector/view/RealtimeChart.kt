@@ -22,6 +22,8 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
             get() = (1000 / CHARTING_FREQUENCY).toLong()
     }
 
+    var labels = arrayOf("ABS", "X", "Y", "Z")
+
     private var renderInitiator: Thread? = null
 
     internal fun createChart(min: Float, max: Float): LineChart {
@@ -91,6 +93,24 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         }
     }
 
+    internal fun addChartEntry(chart: LineChart, values: FloatArray, x: Float) {
+        val data = chart.data
+        if (data != null) {
+            for (index in 0 until values.size) {
+                var set = data.getDataSetByIndex(index)
+                if (set == null) {
+                    set = createSet(index)
+                    data.addDataSet(set)
+                }
+                data.addEntry(Entry(x, values[index]), index)
+                data.notifyDataChanged()
+                chart.notifyDataSetChanged()
+                chart.setVisibleXRangeMaximum(10f)
+                chart.moveViewToX(x)
+            }
+        }
+    }
+
     internal fun addChartEntry(chart: LineChart, value: Float) {
         val data = chart.data
         if (data != null) {
@@ -109,14 +129,7 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
     }
 
     private fun createSet(index: Int): LineDataSet {
-        val label = when (index) {
-            3 -> "ABS"
-            0 -> "X"
-            1 -> "Y"
-            else -> "Z"
-        }
-
-        val set = LineDataSet(null, label)
+        val set = LineDataSet(null, labels[index])
         set.axisDependency = YAxis.AxisDependency.LEFT
         set.color = ColorTemplate.MATERIAL_COLORS[index]
         set.setCircleColor(ColorTemplate.MATERIAL_COLORS[index])
