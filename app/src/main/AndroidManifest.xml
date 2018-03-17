@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.t3r1jj.ips.collector">
+    package="io.github.t3r1jj.ips.research">
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
@@ -16,9 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name="io.github.t3r1jj.ips.research.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="IPS Collector Module"
+            android:label="Indoor Positioning System"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,29 +27,29 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".InertialActivity"
+            android:name="io.github.t3r1jj.ips.research.InertialActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
             android:label="Inertial Sampling"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".WifiActivity"
+            android:name="io.github.t3r1jj.ips.research.WifiActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
             android:label="Wifi Fingerprinting"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".MagneticActivity"
+            android:name="io.github.t3r1jj.ips.research.MagneticActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
             android:label="Magnetic Sampling/Fingerprinting"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".DatabaseActivity"
+            android:name="io.github.t3r1jj.ips.research.DatabaseActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="Collected Data" />
         <activity
-            android:name=".OnlineActivity"
+            android:name="io.github.t3r1jj.ips.research.OnlineActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
             android:label="Online model test" />
