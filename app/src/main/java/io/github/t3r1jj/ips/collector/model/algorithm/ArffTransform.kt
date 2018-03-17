@@ -23,8 +23,13 @@ class ArffTransform(private val ssidRegex: Regex) {
     var addUnknownClassForTraining = false
     var addUnknownClassForTesting = false
     var padWithNoSignal = false
+    var attributeDataType = AttributeDataType.POWER
     var type = ""
     private var _trainDevices = mutableSetOf<String>()
+
+    enum class AttributeDataType {
+        dBm, POWER
+    }
 
     companion object {
         private const val NO_SIGNAL = -100
@@ -169,9 +174,12 @@ class ArffTransform(private val ssidRegex: Regex) {
         var prefix = ""
         attributes.forEach {
             val value = attributeValues[it] ?: NO_SIGNAL
-            objectBuilder
-                    .append(prefix)
-                    .append(dBmToPikoWatt(value.toDouble()))
+            objectBuilder.append(prefix)
+            if (attributeDataType == AttributeDataType.dBm) {
+                objectBuilder.append(value)
+            } else {
+                objectBuilder.append(dBmToPikoWatt(value.toDouble()))
+            }
             prefix = ","
         }
         objectBuilder

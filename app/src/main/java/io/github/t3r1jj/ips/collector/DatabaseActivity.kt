@@ -9,8 +9,12 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.support.design.widget.BottomSheetDialog
+import android.support.v4.widget.NestedScrollView
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
@@ -21,8 +25,10 @@ import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
 import io.github.t3r1jj.ips.collector.model.Dao
 import io.github.t3r1jj.ips.collector.model.algorithm.ArffTransform
+import io.github.t3r1jj.ips.collector.model.test.PedometerTester
 import io.github.t3r1jj.ips.collector.model.data.Dataset
 import io.github.t3r1jj.ips.collector.model.data.DatasetType
+import io.github.t3r1jj.ips.collector.model.data.InertialDataset
 import io.github.t3r1jj.ips.collector.model.data.WifiDataset
 import io.github.t3r1jj.ips.collector.view.RenderableView
 import trikita.anvil.Anvil
@@ -31,6 +37,7 @@ import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 
@@ -64,21 +71,45 @@ class DatabaseActivity : AppCompatActivity() {
                         weight(1f)
                         adapter(dbAdapter)
                     }
-                    button {
+                    linearLayout {
                         size(MATCH, WRAP)
-                        text("Load")
-                        onClick {
-                            AlertDialog.Builder(this@DatabaseActivity)
-                                    .setMessage("From where to load the data?")
-                                    .setPositiveButton("Device", { _, which ->
-                                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                                            showFileChooser()
-                                        }
-                                    }).setNegativeButton("Remote database", { _, which ->
-                                if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                    loadFromRemote()
-                                }
-                            }).show()
+                        orientation(HORIZONTAL)
+                        button {
+                            size(0, WRAP)
+                            text("Load")
+                            onClick {
+                                AlertDialog.Builder(this@DatabaseActivity)
+                                        .setMessage("From where to load the data?")
+                                        .setPositiveButton("Device", { _, which ->
+                                            if (which == DialogInterface.BUTTON_POSITIVE) {
+                                                showFileChooser()
+                                            }
+                                        }).setNegativeButton("Remote database", { _, which ->
+                                    if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                        loadFromRemote()
+                                    }
+                                }).show()
+                            }
+                            weight(0.5f)
+                        }
+                        button {
+                            size(0, WRAP)
+                            text("Save")
+                            onClick {
+                                AlertDialog.Builder(this@DatabaseActivity)
+                                        .setMessage("Where to save the data?")
+                                        .setPositiveButton("Device", { _, which ->
+                                            if (which == DialogInterface.BUTTON_POSITIVE) {
+                                                saveDataToDevice()
+                                            }
+                                        }).setNegativeButton("Remote database", { _, which ->
+                                    if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                        saveDataToRemote()
+                                    }
+                                }).show()
+
+                            }
+                            weight(0.5f)
                         }
                     }
                     button {
@@ -98,36 +129,114 @@ class DatabaseActivity : AppCompatActivity() {
                         }
                     }
 
-                    button {
+
+                    linearLayout {
                         size(MATCH, WRAP)
-                        text("Save")
-                        onClick {
-                            AlertDialog.Builder(this@DatabaseActivity)
-                                    .setMessage("Where to save the data?")
-                                    .setPositiveButton("Device", { _, which ->
-                                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                                            saveDataToDevice()
-                                        }
-                                    }).setNegativeButton("Remote database", { _, which ->
-                                if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                    saveDataToRemote()
+                        orientation(HORIZONTAL)
+                        button {
+                            size(0, WRAP)
+                            text("WiFi to ARFF")
+                            onClick {
+                                if (!isExternalStorageWritable()) {
+                                    Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                                } else if (dao.findAll().isEmpty()) {
+                                    Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
+                                } else {
+                                    arffDialog = AlertDialog.Builder(context).setView(ArffDialog()).show()
                                 }
-                            }).show()
-
-                        }
-                    }
-
-                    button {
-                        size(MATCH, WRAP)
-                        text("To ARFF")
-                        onClick {
-                            if (!isExternalStorageWritable()) {
-                                Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
-                            } else if (dao.findAll().isEmpty()) {
-                                Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
-                            } else {
-                                arffDialog = AlertDialog.Builder(context).setView(ArffDialog()).show()
                             }
+                            weight(0.5f)
+                        }
+                        button {
+                            size(0, WRAP)
+                            text("Pedometer test")
+                            onClick {
+                                val tester = PedometerTester()
+                                val data = dao.findAll().values
+                                        .filter { it.type == DatasetType.INERTIAL }
+                                        .map { it as InertialDataset }
+                                tester.test(data)
+                                val info = ByteArrayOutputStream()
+                                tester.saveOutputInfo(info)
+                                val bottomSheet = BottomSheetDialog(context)
+                                bottomSheet.setContentView(object : RenderableView(this@DatabaseActivity) {
+                                    override fun view() {
+                                        linearLayout {
+                                            size(MATCH, WRAP)
+                                            orientation(VERTICAL)
+                                            linearLayout {
+                                                size(MATCH, WRAP)
+                                                orientation(HORIZONTAL)
+                                                button {
+                                                    size(0, WRAP)
+                                                    weight(1f)
+                                                    text("Info to file")
+                                                    onClick {
+                                                        if (!isExternalStorageWritable()) {
+                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                                                        } else if (data.isEmpty()) {
+                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
+                                                        } else {
+                                                            val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + ".txt"
+                                                            val file = getPublicDownloadStorageFile(fileName)
+                                                            tester.saveOutputInfo(file.outputStream())
+                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+                                                        }
+                                                    }
+                                                }
+                                                button {
+                                                    size(0, WRAP)
+                                                    weight(1f)
+                                                    text("Output to file")
+                                                    onClick {
+                                                        if (!isExternalStorageWritable()) {
+                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                                                        } else if (data.isEmpty()) {
+                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
+                                                        } else {
+                                                            val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + ".txt"
+                                                            val file = getPublicDownloadStorageFile(fileName)
+                                                            tester.saveOutput(file.outputStream())
+                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+                                                        }
+                                                    }
+                                                }
+                                                button {
+                                                    size(0, WRAP)
+                                                    weight(1f)
+                                                    text("Debug to file")
+                                                    onClick {
+                                                        if (!isExternalStorageWritable()) {
+                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+                                                        } else if (data.isEmpty()) {
+                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
+                                                        } else {
+                                                            val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + ".sce"
+                                                            val file = getPublicDownloadStorageFile(fileName)
+                                                            tester.generateDebug(data, file.outputStream())
+                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            val scrollView = NestedScrollView(this@DatabaseActivity)
+                                            val textView = TextView(this@DatabaseActivity)
+                                            textView.text = info.toString()
+                                            scrollView.addView(textView)
+                                            customView(scrollView)
+                                        }
+                                    }
+
+                                    private fun customView(view: View) {
+                                        if (view.parent is ViewGroup) {
+                                            (view.parent as ViewGroup).removeView(view)
+                                        }
+                                        Anvil.currentView<ViewGroup>().addView(view, ViewGroup.LayoutParams(BaseDSL.MATCH, BaseDSL.MATCH))
+                                    }
+                                })
+                                bottomSheet.show()
+                            }
+                            weight(0.5f)
                         }
                     }
                 }
@@ -142,16 +251,20 @@ class DatabaseActivity : AppCompatActivity() {
     }
 
     inner class ArffDialog : RenderableView(this) {
-        private val arrayAdapter = ArrayAdapter<String>(context,
+        private val deviceAdapter = ArrayAdapter<String>(context,
                 R.layout.support_simple_spinner_dropdown_item,
                 dao.findAll().values.map { it.device }.distinct().sorted())
+        private val dataTypeAdapter = ArrayAdapter<ArffTransform.AttributeDataType>(context,
+                R.layout.support_simple_spinner_dropdown_item,
+                ArffTransform.AttributeDataType.values())
         private val firstRegex = "(eduroam)"
         private val secondRegex = "(eduroam|dziekanat|pb-guest|.*hotspot.*)"
         private var isFirstSwitchOn = true
         private var isSecondSwitchOn = false
         private var isThirdSwitchOn = false
         private var customRegex = ""
-        private var device = arrayAdapter.getItem(0)
+        private var device = deviceAdapter.getItem(0)
+        private var attributeDataType = dataTypeAdapter.getItem(0)
 
         override fun view() {
             linearLayout {
@@ -221,9 +334,26 @@ class DatabaseActivity : AppCompatActivity() {
                 spinner {
                     padding(dip(8))
                     size(MATCH, WRAP)
-                    adapter(arrayAdapter)
+                    adapter(deviceAdapter)
                     onItemSelected { a, _, _, _ ->
                         device = a.selectedItem.toString()
+                    }
+                }
+                linearLayout {
+                    padding(dip(8))
+                    BaseDSL.size(MATCH, WRAP)
+                    orientation(HORIZONTAL)
+                    textView {
+                        size(MATCH, WRAP)
+                        text("Attributes data type:")
+                    }
+                }
+                spinner {
+                    padding(dip(8))
+                    size(MATCH, WRAP)
+                    adapter(dataTypeAdapter)
+                    onItemSelected { a, _, _, _ ->
+                        attributeDataType = a.selectedItem as ArffTransform.AttributeDataType
                     }
                 }
                 linearLayout {
@@ -264,13 +394,14 @@ class DatabaseActivity : AppCompatActivity() {
             try {
                 var file: File?
                 val filePaths = mutableListOf<String>()
+                val time = System.currentTimeMillis()
                 for (device in aff.testDevices) {
-                    val fileName = "ips.wifi.test." + formatFileName(device) + ".arff"
+                    val fileName = "ips.wifi.test." + formatFileName(device, time) + ".arff"
                     file = getPublicDownloadStorageFile(fileName)
                     aff.writeToFile(file.outputStream(), device)
                     filePaths.add(file.absolutePath)
                 }
-                val fileName = "ips.wifi." + formatFileName(aff.trainDevices) + ".arff"
+                val fileName = "ips.wifi." + formatFileName(aff.trainDevices, time) + ".arff"
                 file = getPublicDownloadStorageFile(fileName)
                 aff.writeToFile(file.outputStream(), aff.trainDevices)
                 filePaths.add(file.absolutePath)
@@ -280,11 +411,13 @@ class DatabaseActivity : AppCompatActivity() {
             }
         }
 
-        private fun formatFileName(name: String): String {
+        private fun formatFileName(name: String, time: Long): String {
             return name
                     .replace(" ", "-")
                     .replace(",", "_")
-                    .substring(0, Math.min(60, name.length))
+                    .substring(0, Math.min(50, name.length))
+                    .plus(".")
+                    .plus(time.toString())
         }
     }
 

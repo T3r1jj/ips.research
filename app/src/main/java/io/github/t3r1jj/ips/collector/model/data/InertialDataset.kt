@@ -25,6 +25,18 @@ data class InertialDataset @JsonCreator constructor(@JsonProperty("movementType"
     }
 
     enum class InertialMovementType {
-        WALKING, RUNNING, STAIRS_UP, STAIRS_DOWN, ELEVATOR_UP, ELEVATOR_DOWN, NONE
+        WALKING, RUNNING, STAIRS_UP, STAIRS_DOWN, ELEVATOR_UP, ELEVATOR_DOWN, NONE;
+
+        fun toStringPL(): String {
+            return when(this) {
+                WALKING -> "chodzenie"
+                RUNNING -> "bieganie"
+                STAIRS_UP -> "wchodzenie po schodach"
+                STAIRS_DOWN -> "schodzenie po schodach"
+                ELEVATOR_UP -> "windą w górę"
+                ELEVATOR_DOWN -> "windą w dół"
+                NONE -> "w miejscu"
+            }
+        }
     }
 }

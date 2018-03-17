@@ -46,4 +46,6 @@ dependencies {
     compile 'com.android.support:multidex:1.0.3'
 
     testCompile 'org.mockito:mockito-core:2.15.0'
+
+    compile 'com.android.support:design:26.1.0'
 }

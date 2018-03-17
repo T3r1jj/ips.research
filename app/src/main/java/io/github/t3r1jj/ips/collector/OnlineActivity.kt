@@ -69,7 +69,7 @@ class OnlineActivity : AppCompatActivity() {
                     pedometerData[1] = pedometer.min[i]
                     pedometerData[2] = pedometer.max[i]
                     pedometerData[3] = (pedometerData[1] + pedometerData[2]) / 2f
-                    val time = pedometer.t[i] / 100000000f
+                    val time = (pedometer.t[i] - pedometer.t.first()) / 1000000000f
                     chartRenderer.labels = pedometerChartLabels
                     chartRenderer.addChartEntry(pedometerChart, pedometerData, time)
                     val pedometerSensitivity = FloatArray(2)

@@ -12,6 +12,7 @@ class Pedometer {
     val t = mutableListOf<Long>()
     val a = mutableListOf<FloatArray>()
     val aMagnitudes = mutableListOf<Float>()
+    val aFilteredMagnitudes = mutableListOf<Float>()
     val aNormalizedMagnitudes = mutableListOf<Float>()
     val min = mutableListOf<Float>()
     val max = mutableListOf<Float>()
@@ -30,8 +31,37 @@ class Pedometer {
         processLastSample()
     }
 
+    private fun lowPassFilter(values: List<Float>): Float {
+        val divider = when (t.lastIndex) {
+            1 -> 1
+            2 -> 3
+            3 -> 6
+            4 -> 10
+            5 -> 15
+            6 -> 19
+            7 -> 22
+            8 -> 24
+            else -> 25
+        }
+        return ((t.lastIndex downTo t.lastIndex - 3).sumByDouble {
+            when {
+                it < 0 -> 0.toDouble()
+                it == (t.lastIndex - 1) -> 2 * values[it].toDouble()
+                it == (t.lastIndex - 2) -> 3 * values[it].toDouble()
+                it == (t.lastIndex - 3) -> 4 * values[it].toDouble()
+                it == (t.lastIndex - 4) -> 5 * values[it].toDouble()
+                it == (t.lastIndex - 5) -> 4 * values[it].toDouble()
+                it == (t.lastIndex - 6) -> 3 * values[it].toDouble()
+                it == (t.lastIndex - 7) -> 2 * values[it].toDouble()
+                else -> values[it].toDouble()
+            }
+        } / divider).toFloat()
+    }
+
+
     private fun processLastSample() {
-        filter.apply(aMagnitudes.last())
+        aFilteredMagnitudes.add(lowPassFilter(aMagnitudes))
+        filter.apply(aFilteredMagnitudes.last())
         aNormalizedMagnitudes.add(filter.prediction / NORMALIZATION_COEFFICIENT)
         val timeWindowIndex = timeWindowIndex()
         val aRecentNormalizedMagnitudes = aNormalizedMagnitudes.subList(timeWindowIndex, t.size)
@@ -77,8 +107,8 @@ class Pedometer {
             variance -= 0.5f
         }
         if (!variance.isNaN()) {
-            filter.R = variance
-            sensitivity = (Math.sqrt(variance.toDouble()) / NORMALIZATION_COEFFICIENT).toFloat()
+            filter.R = 20*variance
+            sensitivity = 2 * (Math.sqrt(variance.toDouble()) / (NORMALIZATION_COEFFICIENT * NORMALIZATION_COEFFICIENT)).toFloat()
         } else {
             sensitivity = 1f / 30
         }
