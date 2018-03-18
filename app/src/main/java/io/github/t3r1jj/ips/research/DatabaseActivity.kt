@@ -387,6 +387,7 @@ class DatabaseActivity : AppCompatActivity() {
                 else -> customRegex
             }
             val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
+            aff.attributeDataType = attributeDataType
             val wifiData = dao.findAll().values
                     .filter { it.type == DatasetType.WIFI }
                     .map { it as WifiDataset }
