@@ -2,6 +2,7 @@ package io.github.t3r1jj.ips.research.model.algorithm
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.t3r1jj.ips.research.model.algorithm.filter.KalmanFilter
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -21,7 +22,7 @@ class PedometerTest {
 
     @Test
     fun addSample() {
-        val pedometer = Pedometer()
+        val pedometer = Pedometer(KalmanFilter())
         for (acceleration in data.acceleration) {
             pedometer.processSample(acceleration)
         }

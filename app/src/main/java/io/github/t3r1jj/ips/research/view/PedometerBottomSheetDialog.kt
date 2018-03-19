@@ -12,35 +12,43 @@ import trikita.anvil.DSL.*
 
 @SuppressLint("ViewConstructor")
 class PedometerBottomSheetDialog(context: Context, private val text: String, private val pedometer: DatabaseActivity) : RenderableView(context) {
+    private var withButtons: Boolean = true
+
+    constructor(context: Context, pedometer: DatabaseActivity, text: String, withButtons: Boolean) : this(context, text, pedometer) {
+        this.withButtons = withButtons
+    }
+
     override fun view() {
         linearLayout {
             size(BaseDSL.MATCH, BaseDSL.WRAP)
             DSL.orientation(LinearLayout.VERTICAL)
-            linearLayout {
-                size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
-                button {
-                    size(0, BaseDSL.WRAP)
-                    weight(1f)
-                    DSL.text("Info to file")
-                    onClick {
-                        pedometer.onPedometerInfoClick()
+            if (withButtons) {
+                linearLayout {
+                    size(BaseDSL.MATCH, BaseDSL.WRAP)
+                    DSL.orientation(LinearLayout.HORIZONTAL)
+                    button {
+                        size(0, BaseDSL.WRAP)
+                        weight(1f)
+                        DSL.text("Info to file")
+                        onClick {
+                            pedometer.onPedometerInfoClick()
+                        }
                     }
-                }
-                button {
-                    size(0, BaseDSL.WRAP)
-                    weight(1f)
-                    DSL.text("Output to file")
-                    onClick {
-                        pedometer.onPedometerOutputClick()
+                    button {
+                        size(0, BaseDSL.WRAP)
+                        weight(1f)
+                        DSL.text("Output to file")
+                        onClick {
+                            pedometer.onPedometerOutputClick()
+                        }
                     }
-                }
-                button {
-                    size(0, BaseDSL.WRAP)
-                    weight(1f)
-                    DSL.text("Debug to file")
-                    onClick {
-                        pedometer.onPedometerDebugClick()
+                    button {
+                        size(0, BaseDSL.WRAP)
+                        weight(1f)
+                        DSL.text("Debug to file")
+                        onClick {
+                            pedometer.onPedometerDebugClick()
+                        }
                     }
                 }
             }

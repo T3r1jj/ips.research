@@ -8,7 +8,9 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Environment
+import android.support.design.widget.BottomSheetDialog
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.widget.Adapter
@@ -28,7 +30,9 @@ import io.github.t3r1jj.ips.research.model.data.DatasetType
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import io.github.t3r1jj.ips.research.model.test.PedometerTester
+import io.github.t3r1jj.ips.research.model.test.WekaPreTester
 import io.github.t3r1jj.ips.research.view.ArffDialog
+import io.github.t3r1jj.ips.research.view.PedometerBottomSheetDialog
 import io.github.t3r1jj.ips.research.view.PedometerDialog
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.Anvil
@@ -50,6 +54,7 @@ class DatabaseActivity : AppCompatActivity() {
     private var filePickerDialog: FilePickerDialog? = null
     private lateinit var dbAdapter: Adapter
     internal var userInputDialog: Dialog? = null
+    internal var outputDialog: Dialog? = null
     internal var filterFactory = FilterFactory(FilterFactory.FilterType.NO_FILTER)
     internal lateinit var tester: PedometerTester
 
@@ -172,6 +177,9 @@ class DatabaseActivity : AppCompatActivity() {
         super.onDestroy()
         if (userInputDialog?.isShowing == true) {
             userInputDialog?.dismiss()
+        }
+        if (outputDialog?.isShowing == true) {
+            outputDialog?.dismiss()
         }
     }
 
@@ -397,10 +405,10 @@ class DatabaseActivity : AppCompatActivity() {
             var file: File?
             val filePaths = mutableListOf<String>()
             val time = System.currentTimeMillis()
-            for (device in aff.testDevices) {
-                val fileName = "ips.wifi.test." + formatFileName(device, time) + ".arff"
+            for (dev in aff.testDevices) {
+                val fileName = "ips.wifi.test." + formatFileName(dev, time) + ".arff"
                 file = getPublicDownloadStorageFile(fileName)
-                aff.writeToFile(file.outputStream(), device)
+                aff.writeToFile(file.outputStream(), dev)
                 filePaths.add(file.absolutePath)
             }
             val fileName = "ips.wifi." + formatFileName(aff.trainDevices, time) + ".arff"
@@ -411,6 +419,21 @@ class DatabaseActivity : AppCompatActivity() {
         } catch (ex: Exception) {
             Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
         }
+    }
+
+    internal fun testArff(regex: String, attributeDataType: ArffTransform.AttributeDataType, averageTests: Boolean, device: String) {
+        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
+        aff.attributeDataType = attributeDataType
+        aff.averageTests = averageTests
+        val wifiData = wifiData()
+        aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
+        val tester = WekaPreTester(aff)
+        val text = "Weka pre test accuracy:\n" + tester.knnTest().joinToString("%\n\t", "kNN:\n\t", "%\n") +
+                tester.customTest().joinToString("%\n\t", "Custom:\n\t", "%\n\n")
+        val bottomSheet = BottomSheetDialog(this)
+        outputDialog = bottomSheet
+        bottomSheet.setContentView(PedometerBottomSheetDialog(this, this, text, false))
+        bottomSheet.show()
     }
 
     private fun wifiData(): List<WifiDataset> {

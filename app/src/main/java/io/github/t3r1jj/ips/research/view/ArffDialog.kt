@@ -50,7 +50,7 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                     size(BaseDSL.WRAP, BaseDSL.WRAP)
                     DSL.text(firstRegex)
                     DSL.checked(isFirstSwitchOn)
-                    onCheckedChange { c: CompoundButton?, b: Boolean ->
+                    onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isFirstSwitchOn = b
                     }
                 }
@@ -59,7 +59,7 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                     size(BaseDSL.WRAP, BaseDSL.WRAP)
                     DSL.text(secondRegex)
                     DSL.checked(isSecondSwitchOn)
-                    onCheckedChange { c: CompoundButton?, b: Boolean ->
+                    onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isSecondSwitchOn = b
                     }
                 }
@@ -68,7 +68,7 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                     size(BaseDSL.WRAP, BaseDSL.WRAP)
                     DSL.text("Custom (Java regex, fill in below):")
                     DSL.checked(isThirdSwitchOn)
-                    onCheckedChange { c: CompoundButton?, b: Boolean ->
+                    onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isThirdSwitchOn = b
                     }
                 }
@@ -151,6 +151,19 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                         arffActivity.generateArff(regex, attributeDataType, averageTests, device)
                     }
                     BaseDSL.weight(1f)
+                }
+
+                button {
+                    size(BaseDSL.WRAP, BaseDSL.WRAP)
+                    DSL.text("Test")
+                    onClick {
+                        val regex = when {
+                            isFirstSwitchOn -> firstRegex
+                            isSecondSwitchOn -> secondRegex
+                            else -> customRegex
+                        }
+                        arffActivity.testArff(regex, attributeDataType, averageTests, device)
+                    }
                 }
 
                 button {

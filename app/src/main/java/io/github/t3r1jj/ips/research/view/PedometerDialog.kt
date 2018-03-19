@@ -74,7 +74,7 @@ class PedometerDialog(context: Context, private val pedometer: DatabaseActivity)
                         val info = ByteArrayOutputStream()
                         pedometer.tester.saveOutputInfo(info)
                         val bottomSheet = BottomSheetDialog(context)
-                        pedometer.userInputDialog = bottomSheet
+                        pedometer.outputDialog = bottomSheet
                         bottomSheet.setContentView(PedometerBottomSheetDialog(context, info.toString(), pedometer))
                         bottomSheet.show()
                     }
