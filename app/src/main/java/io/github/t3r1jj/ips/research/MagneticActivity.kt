@@ -199,13 +199,6 @@ class MagneticActivity : AppCompatActivity() {
                 }
 
             }
-
-            private fun customView(chart: View) {
-                if (chart.parent is ViewGroup) {
-                    (chart.parent as ViewGroup).removeView(chart)
-                }
-                Anvil.currentView<ViewGroup>().addView(chart, LayoutParams(MATCH, MATCH))
-            }
         })
 
     }

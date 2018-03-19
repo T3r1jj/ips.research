@@ -1,6 +1,7 @@
 package io.github.t3r1jj.ips.research.model.test
 
 import io.github.t3r1jj.ips.research.model.algorithm.Pedometer
+import io.github.t3r1jj.ips.research.model.algorithm.filter.FilterFactory
 import io.github.t3r1jj.ips.research.model.data.Dataset
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import java.io.BufferedWriter
@@ -8,7 +9,7 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.util.*
 
-class PedometerTester {
+class PedometerTester(private val filterFactory: FilterFactory) {
     val output = mutableListOf<Pair<InertialDataset, Int>>()
     fun totalSteps(data: List<Pair<InertialDataset, Int>>) =
             data.sumBy { it.first.steps }
@@ -27,7 +28,7 @@ class PedometerTester {
 
     fun test(dataset: Iterable<InertialDataset>) {
         for (inertialData in dataset) {
-            val pedometer = Pedometer()
+            val pedometer = Pedometer(filterFactory.createFilter())
             for (acceleration in inertialData.acceleration) {
                 pedometer.processSample(acceleration)
             }
@@ -43,6 +44,12 @@ class PedometerTester {
         writer.newLine()
         writer.write("Test date: ")
         writer.write(Dataset.dateFormatter.format(Date()))
+        writer.newLine()
+        writer.write("Algorithm: ")
+        writer.write(getFormattedFilterType())
+        writer.newLine()
+        writer.write("Number of test cases: ")
+        writer.write(output.size.toString())
         writer.newLine()
         val all = output
         all.forEach {
@@ -66,8 +73,14 @@ class PedometerTester {
         writer.write("// Test date: ")
         writer.write(Dataset.dateFormatter.format(Date()))
         writer.newLine()
+        writer.write("// Algorithm: ")
+        writer.write(getFormattedFilterType())
+        writer.newLine()
+        writer.write("// Test cases (x5 plots): ")
+        writer.write(output.size.toString())
+        writer.newLine()
         for (inertialData in dataset) {
-            val pedometer = Pedometer()
+            val pedometer = Pedometer(filterFactory.createFilter())
             for (acceleration in inertialData.acceleration) {
                 pedometer.processSample(acceleration)
             }
@@ -116,44 +129,13 @@ class PedometerTester {
             writer.write("aFMNsens = ")
             writer.write(pedometer.sensitivities.joinToString(";", "[", "];"))
             writer.newLine()
-            writer.write("plot(x,[aFMN, aFMNmin, aFMNmax, (aFMNmin+aFMNmax)/2]);")
-            writer.newLine()
             val title = "title('Urządzenie: " + formatDeviceName(inertialData) +
+                    ", filtr: " + getFormattedFilterTypePL() +
                     ", ruch: " + inertialData.movementType.toStringPL() +
                     ", liczba kroków: " + inertialData.steps +
                     ", wykryto: " + pedometer.stepCount + "');"
-            writer.write(title)
-            writer.newLine()
             val xLabel = "xlabel('t[s]');"
-            writer.write(xLabel)
-            writer.newLine()
             val yLabel = "ylabel('a[m/s^2]');"
-            writer.write(yLabel)
-            writer.newLine()
-            writer.write("hl=legend(['norm(kalman(lowPass(magn(a))))';'min';'max';'threshold']);")
-            writer.newLine()
-            writer.write("mkdir('ips');")
-            writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "-postfilter.png');")
-            writer.newLine()
-            writer.write("clf;")
-            writer.newLine()
-            writer.write("plot(x,[(aFMNmax-aFMNmin)/2,aFMNsens]);")
-            writer.newLine()
-            writer.write(title)
-            writer.newLine()
-            writer.write(xLabel)
-            writer.newLine()
-            writer.write(yLabel)
-            writer.newLine()
-            writer.write("hl=legend(['max-min';'sensitivity']);")
-            writer.newLine()
-            writer.write("mkdir('ips');")
-            writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "-sensitivity.png');")
-            writer.newLine()
-            writer.write("clf;")
-            writer.newLine()
             writer.write("plot(x,[aX,aY,aZ]);")
             writer.newLine()
             writer.write(title)
@@ -166,7 +148,7 @@ class PedometerTester {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "-axyz.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-axyz.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -182,7 +164,7 @@ class PedometerTester {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "-amagn.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-amagn.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -194,16 +176,64 @@ class PedometerTester {
             writer.newLine()
             writer.write(yLabel)
             writer.newLine()
-            writer.write("hl=legend(['lowPass(magn(a))']);")
+            writer.write("hl=legend(['filter(magn(a))']);")
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "-afm.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-afm.png');")
+            writer.newLine()
+            writer.write("clf;")
+            writer.newLine()
+            writer.write("plot(x,[aFMN, aFMNmin, aFMNmax, (aFMNmin+aFMNmax)/2]);")
+            writer.newLine()
+            writer.write(title)
+            writer.newLine()
+            writer.write(xLabel)
+            writer.newLine()
+            writer.write(yLabel)
+            writer.newLine()
+            writer.write("hl=legend(['norm(filter(magn(a))))';'min';'max';'threshold']);")
+            writer.newLine()
+            writer.write("mkdir('ips');")
+            writer.newLine()
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-postfilter.png');")
+            writer.newLine()
+            writer.write("clf;")
+            writer.newLine()
+            writer.write("plot(x,[(aFMNmax-aFMNmin)/2,aFMNsens]);")
+            writer.newLine()
+            writer.write(title)
+            writer.newLine()
+            writer.write(xLabel)
+            writer.newLine()
+            writer.write(yLabel)
+            writer.newLine()
+            writer.write("hl=legend(['max-min';'sensitivity']);")
+            writer.newLine()
+            writer.write("mkdir('ips');")
+            writer.newLine()
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-sensitivity.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
         }
         writer.close()
+    }
+
+    private fun getFormattedFilterType(): String {
+        return if (filterFactory.filterType == FilterFactory.FilterType.MOVING_AVERAGE_FILTER) {
+            filterFactory.filterType.toString() + " (" + filterFactory.averagingWindowLength + ")"
+        } else {
+            filterFactory.filterType.toString()
+        }
+    }
+
+    private fun getFormattedFilterTypePL(): String {
+        return if (filterFactory.filterType == FilterFactory.FilterType.MOVING_AVERAGE_FILTER) {
+            filterFactory.filterType.toStringPL() + " (" + filterFactory.averagingWindowLength + ")"
+        } else {
+            filterFactory.filterType.toStringPL()
+        }
     }
 
     fun saveOutputInfo(outputStream: OutputStream) {
@@ -214,10 +244,13 @@ class PedometerTester {
         writer.write("Test date: ")
         writer.write(Dataset.dateFormatter.format(Date()))
         writer.newLine()
-        writer.write("Devices : ")
+        writer.write("Algorithm:")
+        writer.write(getFormattedFilterType())
+        writer.newLine()
+        writer.write("Devices: ")
         writer.write(deviceDatasets.keys.joinToString())
         writer.newLine()
-        writer.write("Datasets: ")
+        writer.write("Number of test cases: ")
         writer.write(output.size.toString())
         writer.newLine()
         writer.newLine()
@@ -284,6 +317,14 @@ class PedometerTester {
         writer.write(" steps negative difference: ")
         writer.write(totalStepsDifferenceNegative(deviceTestCases).toString())
         writer.newLine()
+        writer.write(title)
+        writer.write(" total time: ")
+        writer.write(Math.round(totalTime(deviceTestCases)).toString())
+        writer.write(" s")
+        writer.newLine()
     }
+
+    private fun totalTime(data: List<Pair<InertialDataset, Int>>) =
+            data.sumByDouble { (it.first.acceleration.last().timestamp - it.first.acceleration.first().timestamp).toDouble() / 1000000000 }
 
 }

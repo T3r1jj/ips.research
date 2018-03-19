@@ -12,6 +12,8 @@ import com.github.mikephil.charting.charts.LineChart
 import io.github.t3r1jj.ips.research.model.Dao
 import io.github.t3r1jj.ips.research.model.algorithm.Pedometer
 import io.github.t3r1jj.ips.research.model.algorithm.WifiNavigator
+import io.github.t3r1jj.ips.research.model.algorithm.filter.FilterFactory
+import io.github.t3r1jj.ips.research.model.algorithm.filter.KalmanFilter
 import io.github.t3r1jj.ips.research.model.collector.InertialSampler
 import io.github.t3r1jj.ips.research.model.collector.InertialSampler.InertialSamplerListener
 import io.github.t3r1jj.ips.research.model.collector.SensorSample
@@ -171,7 +173,7 @@ class OnlineActivity : AppCompatActivity() {
                             enabled(!wifiSampler.running)
                             onClick {
                                 try {
-                                    pedometer = Pedometer()
+                                    pedometer = Pedometer(KalmanFilter())
                                     stopSampling()
                                     inertialSampler.samplerListener = object : InertialSamplerListener {
                                         override fun onSampleReceived(sensorSample: SensorSample) {
@@ -207,13 +209,6 @@ class OnlineActivity : AppCompatActivity() {
                         }
                     }
                 }
-            }
-
-            private fun customView(chart: View) {
-                if (chart.parent is ViewGroup) {
-                    (chart.parent as ViewGroup).removeView(chart)
-                }
-                Anvil.currentView<ViewGroup>().addView(chart, ViewGroup.LayoutParams(BaseDSL.MATCH, BaseDSL.MATCH))
             }
         })
     }

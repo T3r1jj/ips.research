@@ -9,15 +9,12 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.support.design.widget.BottomSheetDialog
-import android.support.v4.widget.NestedScrollView
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.view.View
-import android.view.ViewGroup
-import android.widget.*
+import android.widget.Adapter
 import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
+import android.widget.Toast
 import com.couchbase.lite.replicator.Replication
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.angads25.filepicker.model.DialogConfigs
@@ -25,19 +22,20 @@ import com.github.angads25.filepicker.model.DialogProperties
 import com.github.angads25.filepicker.view.FilePickerDialog
 import io.github.t3r1jj.ips.research.model.Dao
 import io.github.t3r1jj.ips.research.model.algorithm.ArffTransform
-import io.github.t3r1jj.ips.research.model.test.PedometerTester
+import io.github.t3r1jj.ips.research.model.algorithm.filter.FilterFactory
 import io.github.t3r1jj.ips.research.model.data.Dataset
 import io.github.t3r1jj.ips.research.model.data.DatasetType
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
+import io.github.t3r1jj.ips.research.model.test.PedometerTester
+import io.github.t3r1jj.ips.research.view.ArffDialog
+import io.github.t3r1jj.ips.research.view.PedometerDialog
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.Anvil
-import trikita.anvil.BaseDSL
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 
@@ -49,9 +47,11 @@ class DatabaseActivity : AppCompatActivity() {
 
     private var loadingCheckThread: Thread? = null
     private var uploadingCheckThread: Thread? = null
-    private var dialog: FilePickerDialog? = null
+    private var filePickerDialog: FilePickerDialog? = null
     private lateinit var dbAdapter: Adapter
-    private var arffDialog: Dialog? = null
+    internal var userInputDialog: Dialog? = null
+    internal var filterFactory = FilterFactory(FilterFactory.FilterType.NO_FILTER)
+    internal lateinit var tester: PedometerTester
 
     val dao: Dao by lazy {
         Dao(this)
@@ -142,7 +142,7 @@ class DatabaseActivity : AppCompatActivity() {
                                 } else if (dao.findAll().isEmpty()) {
                                     Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
                                 } else {
-                                    arffDialog = AlertDialog.Builder(context).setView(ArffDialog()).show()
+                                    userInputDialog = AlertDialog.Builder(context).setView(ArffDialog(this@DatabaseActivity, this@DatabaseActivity)).show()
                                 }
                             }
                             weight(0.5f)
@@ -151,90 +151,7 @@ class DatabaseActivity : AppCompatActivity() {
                             size(0, WRAP)
                             text("Pedometer test")
                             onClick {
-                                val tester = PedometerTester()
-                                val data = dao.findAll().values
-                                        .filter { it.type == DatasetType.INERTIAL }
-                                        .map { it as InertialDataset }
-                                tester.test(data)
-                                val info = ByteArrayOutputStream()
-                                tester.saveOutputInfo(info)
-                                val bottomSheet = BottomSheetDialog(context)
-                                bottomSheet.setContentView(object : RenderableView(this@DatabaseActivity) {
-                                    override fun view() {
-                                        linearLayout {
-                                            size(MATCH, WRAP)
-                                            orientation(VERTICAL)
-                                            linearLayout {
-                                                size(MATCH, WRAP)
-                                                orientation(HORIZONTAL)
-                                                button {
-                                                    size(0, WRAP)
-                                                    weight(1f)
-                                                    text("Info to file")
-                                                    onClick {
-                                                        if (!isExternalStorageWritable()) {
-                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
-                                                        } else if (data.isEmpty()) {
-                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
-                                                        } else {
-                                                            val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + ".txt"
-                                                            val file = getPublicDownloadStorageFile(fileName)
-                                                            tester.saveOutputInfo(file.outputStream())
-                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
-                                                        }
-                                                    }
-                                                }
-                                                button {
-                                                    size(0, WRAP)
-                                                    weight(1f)
-                                                    text("Output to file")
-                                                    onClick {
-                                                        if (!isExternalStorageWritable()) {
-                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
-                                                        } else if (data.isEmpty()) {
-                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
-                                                        } else {
-                                                            val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + ".txt"
-                                                            val file = getPublicDownloadStorageFile(fileName)
-                                                            tester.saveOutput(file.outputStream())
-                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
-                                                        }
-                                                    }
-                                                }
-                                                button {
-                                                    size(0, WRAP)
-                                                    weight(1f)
-                                                    text("Debug to file")
-                                                    onClick {
-                                                        if (!isExternalStorageWritable()) {
-                                                            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
-                                                        } else if (data.isEmpty()) {
-                                                            Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
-                                                        } else {
-                                                            val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + ".sce"
-                                                            val file = getPublicDownloadStorageFile(fileName)
-                                                            tester.generateDebug(data, file.outputStream())
-                                                            Toast.makeText(this@DatabaseActivity, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            val scrollView = NestedScrollView(this@DatabaseActivity)
-                                            val textView = TextView(this@DatabaseActivity)
-                                            textView.text = info.toString()
-                                            scrollView.addView(textView)
-                                            customView(scrollView)
-                                        }
-                                    }
-
-                                    private fun customView(view: View) {
-                                        if (view.parent is ViewGroup) {
-                                            (view.parent as ViewGroup).removeView(view)
-                                        }
-                                        Anvil.currentView<ViewGroup>().addView(view, ViewGroup.LayoutParams(BaseDSL.MATCH, BaseDSL.MATCH))
-                                    }
-                                })
-                                bottomSheet.show()
+                                userInputDialog = AlertDialog.Builder(context).setView(PedometerDialog(this@DatabaseActivity, this@DatabaseActivity)).show()
                             }
                             weight(0.5f)
                         }
@@ -250,183 +167,11 @@ class DatabaseActivity : AppCompatActivity() {
 
     }
 
-    inner class ArffDialog : RenderableView(this) {
-        private val deviceAdapter = ArrayAdapter<String>(context,
-                R.layout.support_simple_spinner_dropdown_item,
-                dao.findAll().values.map { it.device }.distinct().sorted())
-        private val dataTypeAdapter = ArrayAdapter<ArffTransform.AttributeDataType>(context,
-                R.layout.support_simple_spinner_dropdown_item,
-                ArffTransform.AttributeDataType.values())
-        private val firstRegex = "(eduroam)"
-        private val secondRegex = "(eduroam|dziekanat|pb-guest|.*hotspot.*)"
-        private var isFirstSwitchOn = true
-        private var isSecondSwitchOn = false
-        private var isThirdSwitchOn = false
-        private var customRegex = ""
-        private var device = deviceAdapter.getItem(0)
-        private var attributeDataType = dataTypeAdapter.getItem(0)
-
-        override fun view() {
-            linearLayout {
-                padding(dip(8))
-                size(MATCH, MATCH)
-                orientation(VERTICAL)
-                textView {
-                    padding(dip(8))
-                    size(MATCH, WRAP)
-                    text("Transform WiFi data into ARFF for Weka manual research")
-                }
-                textView {
-                    padding(dip(8))
-                    size(MATCH, WRAP)
-                    text("SSID regex:")
-                }
-                radioGroup {
-                    radioButton {
-                        padding(dip(8))
-                        size(WRAP, WRAP)
-                        text(firstRegex)
-                        checked(isFirstSwitchOn)
-                        onCheckedChange { c: CompoundButton?, b: Boolean ->
-                            isFirstSwitchOn = b
-                        }
-                    }
-                    radioButton {
-                        padding(dip(8))
-                        size(WRAP, WRAP)
-                        text(secondRegex)
-                        checked(isSecondSwitchOn)
-                        onCheckedChange { c: CompoundButton?, b: Boolean ->
-                            isSecondSwitchOn = b
-                        }
-                    }
-                    radioButton {
-                        padding(dip(8))
-                        size(WRAP, WRAP)
-                        text("Custom (Java regex, fill in below):")
-                        checked(isThirdSwitchOn)
-                        onCheckedChange { c: CompoundButton?, b: Boolean ->
-                            isThirdSwitchOn = b
-                        }
-                    }
-                    linearLayout {
-                        BaseDSL.size(MATCH, WRAP)
-                        orientation(HORIZONTAL)
-                        editText {
-                            padding(dip(8))
-                            size(0, WRAP)
-                            BaseDSL.weight(1f)
-                            onTextChanged {
-                                customRegex = it.toString()
-                            }
-                        }
-                    }
-                }
-                linearLayout {
-                    padding(dip(8))
-                    BaseDSL.size(MATCH, WRAP)
-                    orientation(HORIZONTAL)
-                    textView {
-                        size(MATCH, WRAP)
-                        text("Training dataset from device (the rest will be testing):")
-                    }
-                }
-                spinner {
-                    padding(dip(8))
-                    size(MATCH, WRAP)
-                    adapter(deviceAdapter)
-                    onItemSelected { a, _, _, _ ->
-                        device = a.selectedItem.toString()
-                    }
-                }
-                linearLayout {
-                    padding(dip(8))
-                    BaseDSL.size(MATCH, WRAP)
-                    orientation(HORIZONTAL)
-                    textView {
-                        size(MATCH, WRAP)
-                        text("Attributes data type:")
-                    }
-                }
-                spinner {
-                    padding(dip(8))
-                    size(MATCH, WRAP)
-                    adapter(dataTypeAdapter)
-                    onItemSelected { a, _, _, _ ->
-                        attributeDataType = a.selectedItem as ArffTransform.AttributeDataType
-                    }
-                }
-                linearLayout {
-                    BaseDSL.size(MATCH, WRAP)
-                    orientation(HORIZONTAL)
-                    button {
-                        size(0, WRAP)
-                        text("Generate")
-                        onClick {
-                            generateArff()
-                        }
-                        BaseDSL.weight(1f)
-                    }
-
-                    button {
-                        size(0, WRAP)
-                        text("Cancel")
-                        onClick {
-                            arffDialog?.dismiss()
-                        }
-                        BaseDSL.weight(1f)
-                    }
-                }
-            }
-        }
-
-        private fun generateArff() {
-            val regex = when {
-                isFirstSwitchOn -> firstRegex
-                isSecondSwitchOn -> secondRegex
-                else -> customRegex
-            }
-            val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
-            aff.attributeDataType = attributeDataType
-            val wifiData = dao.findAll().values
-                    .filter { it.type == DatasetType.WIFI }
-                    .map { it as WifiDataset }
-            aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
-            try {
-                var file: File?
-                val filePaths = mutableListOf<String>()
-                val time = System.currentTimeMillis()
-                for (device in aff.testDevices) {
-                    val fileName = "ips.wifi.test." + formatFileName(device, time) + ".arff"
-                    file = getPublicDownloadStorageFile(fileName)
-                    aff.writeToFile(file.outputStream(), device)
-                    filePaths.add(file.absolutePath)
-                }
-                val fileName = "ips.wifi." + formatFileName(aff.trainDevices, time) + ".arff"
-                file = getPublicDownloadStorageFile(fileName)
-                aff.writeToFile(file.outputStream(), aff.trainDevices)
-                filePaths.add(file.absolutePath)
-                Toast.makeText(this@DatabaseActivity, "Generated ARFF files to: " + filePaths.joinToString("\n", "\n"), Toast.LENGTH_LONG).show()
-            } catch (ex: Exception) {
-                Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
-            }
-        }
-
-        private fun formatFileName(name: String, time: Long): String {
-            return name
-                    .replace(" ", "-")
-                    .replace(",", "_")
-                    .substring(0, Math.min(50, name.length))
-                    .plus(".")
-                    .plus(time.toString())
-        }
-    }
-
 
     override fun onDestroy() {
         super.onDestroy()
-        if (arffDialog?.isShowing == true) {
-            arffDialog?.dismiss()
+        if (userInputDialog?.isShowing == true) {
+            userInputDialog?.dismiss()
         }
     }
 
@@ -564,14 +309,14 @@ class DatabaseActivity : AppCompatActivity() {
         properties.error_dir = File(DialogConfigs.DEFAULT_DIR)
         properties.offset = File(DialogConfigs.DEFAULT_DIR)
         properties.extensions = null
-        dialog = FilePickerDialog(this, properties)
-        dialog!!.setTitle("Select a IPS json data file")
-        dialog!!.setDialogSelectionListener {
+        filePickerDialog = FilePickerDialog(this, properties)
+        filePickerDialog!!.setTitle("Select a IPS json data file")
+        filePickerDialog!!.setDialogSelectionListener {
             dao.saveAll(File(it[0]))
             recreateAdapter()
             Anvil.render()
         }
-        dialog!!.show()
+        filePickerDialog!!.show()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -596,9 +341,97 @@ class DatabaseActivity : AppCompatActivity() {
         if (uploadingCheckThread != null) {
             uploadingCheckThread!!.interrupt()
         }
-        if (dialog?.isShowing == true) {
-            dialog!!.dismiss()
+        if (filePickerDialog?.isShowing == true) {
+            filePickerDialog!!.dismiss()
         }
+    }
+
+    fun onPedometerDebugClick() {
+        if (!isExternalStorageWritable()) {
+            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+        } else {
+            val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".sce"
+            val file = getPublicDownloadStorageFile(fileName)
+            tester.generateDebug(inertialData(), file.outputStream())
+            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun onPedometerOutputClick() {
+        if (!isExternalStorageWritable()) {
+            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+        } else {
+            val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
+            val file = getPublicDownloadStorageFile(fileName)
+            tester.saveOutput(file.outputStream())
+            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun onPedometerInfoClick() {
+        if (!isExternalStorageWritable()) {
+            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+        } else {
+            val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
+            val file = getPublicDownloadStorageFile(fileName)
+            tester.saveOutputInfo(file.outputStream())
+            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun getFormattedFilterType(): String {
+        return if (filterFactory.filterType == FilterFactory.FilterType.MOVING_AVERAGE_FILTER) {
+            filterFactory.filterType.toString() + "-" + filterFactory.averagingWindowLength
+        } else {
+            filterFactory.filterType.toString()
+        }
+    }
+
+    internal fun generateArff(regex: String, attributeDataType: ArffTransform.AttributeDataType, averageTests: Boolean, device: String) {
+        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
+        aff.attributeDataType = attributeDataType
+        aff.averageTests = averageTests
+        val wifiData = wifiData()
+        aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
+        try {
+            var file: File?
+            val filePaths = mutableListOf<String>()
+            val time = System.currentTimeMillis()
+            for (device in aff.testDevices) {
+                val fileName = "ips.wifi.test." + formatFileName(device, time) + ".arff"
+                file = getPublicDownloadStorageFile(fileName)
+                aff.writeToFile(file.outputStream(), device)
+                filePaths.add(file.absolutePath)
+            }
+            val fileName = "ips.wifi." + formatFileName(aff.trainDevices, time) + ".arff"
+            file = getPublicDownloadStorageFile(fileName)
+            aff.writeToFile(file.outputStream(), aff.trainDevices)
+            filePaths.add(file.absolutePath)
+            Toast.makeText(this@DatabaseActivity, "Generated ARFF files to: " + filePaths.joinToString("\n", "\n"), Toast.LENGTH_LONG).show()
+        } catch (ex: Exception) {
+            Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun wifiData(): List<WifiDataset> {
+        return dao.findAll().values
+                .filter { it.type == DatasetType.WIFI }
+                .map { it as WifiDataset }
+    }
+
+    private fun formatFileName(name: String, time: Long): String {
+        return name
+                .replace(" ", "-")
+                .replace(",", "_")
+                .substring(0, Math.min(50, name.length))
+                .plus(".")
+                .plus(time.toString())
+    }
+
+    fun inertialData(): Iterable<InertialDataset> {
+        return dao.findAll().values
+                .filter { it.type == DatasetType.INERTIAL }
+                .map { it as InertialDataset }
     }
 
 }

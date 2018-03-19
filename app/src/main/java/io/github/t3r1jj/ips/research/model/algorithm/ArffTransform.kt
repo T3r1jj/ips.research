@@ -23,6 +23,8 @@ class ArffTransform(private val ssidRegex: Regex) {
     var addUnknownClassForTraining = false
     var addUnknownClassForTesting = false
     var padWithNoSignal = false
+    var averageTests = true
+    var averageTraining = false
     var attributeDataType = AttributeDataType.POWER
     var type = ""
     private var _trainDevices = mutableSetOf<String>()
@@ -63,7 +65,12 @@ class ArffTransform(private val ssidRegex: Regex) {
             if (padWithNoSignal) {
                 padWithNoSignalObjects(dataObjects, data)
             }
-            objects[trainDevices]!!.addAll(dataObjects)
+
+            if (averageTraining) {
+                objects[trainDevices]!!.add(avg(dataObjects).joinToString(",") + "," + data.place)
+            } else {
+                objects[trainDevices]!!.addAll(dataObjects)
+            }
         }
 
         testData.forEach { data ->
@@ -71,7 +78,11 @@ class ArffTransform(private val ssidRegex: Regex) {
             if (padWithNoSignal) {
                 padWithNoSignalObjects(dataObjects, data)
             }
-            objects[data.device]!!.add(avg(dataObjects).joinToString(",") + "," + data.place)
+            if (averageTests) {
+                objects[data.device]!!.add(avg(dataObjects).joinToString(",") + "," + data.place)
+            } else {
+                objects[data.device]!!.addAll(dataObjects)
+            }
         }
 
         if (addUnknownClassForTraining) {

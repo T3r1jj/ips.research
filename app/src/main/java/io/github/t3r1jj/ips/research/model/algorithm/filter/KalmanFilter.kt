@@ -1,6 +1,6 @@
-package io.github.t3r1jj.ips.research.model.algorithm
+package io.github.t3r1jj.ips.research.model.algorithm.filter
 
-class KalmanFilter {
+class KalmanFilter : SignalFilter {
     private val A = 1f  // state transition
     private val B = 0f  // control factor
     private val C = 1f  // observation factor
@@ -10,11 +10,11 @@ class KalmanFilter {
     private var G = 1f  // Kalman gain (moderates prediction)
     private var P = Float.NaN   // covariance prediction (average error)
     private var measurement = Float.NaN // measured signal
-    var prediction = Float.NaN // predicted signal without noise
-    var R = 10f // estimated measurement error covariance
+    private var prediction = Float.NaN // predicted signal without noise
+    private var R = 10f // estimated measurement error covariance
 
-    fun apply(ech: Float) {
-        measurement = ech
+    override fun apply(value: Float): Float {
+        measurement = value
         if (prediction.isNaN()) {
             prediction = 1 / C * measurement
             P = 1 / C * R * 1 / C
@@ -25,5 +25,10 @@ class KalmanFilter {
             prediction += G * (measurement - C * prediction)
             P -= G * C * P
         }
+        return prediction
+    }
+
+    override fun onVarianceUpdate(variance: Float) {
+        R = variance
     }
 }

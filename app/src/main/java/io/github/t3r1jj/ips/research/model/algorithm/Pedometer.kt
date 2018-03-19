@@ -1,14 +1,14 @@
 package io.github.t3r1jj.ips.research.model.algorithm
 
+import io.github.t3r1jj.ips.research.model.algorithm.filter.SignalFilter
 import io.github.t3r1jj.ips.research.model.collector.SensorSample
 
-class Pedometer {
+class Pedometer(private val filter: SignalFilter) {
     companion object {
         const val NORMALIZATION_COEFFICIENT = 9.81f
         const val TIME_WINDOW_NS = 200000000
     }
 
-    private val filter = KalmanFilter()
     val t = mutableListOf<Long>()
     val a = mutableListOf<FloatArray>()
     val aMagnitudes = mutableListOf<Float>()
@@ -18,6 +18,7 @@ class Pedometer {
     val max = mutableListOf<Float>()
     private var isAbove = false
     private var sensitivity = 1 / 30f
+    private var lastStepTime = 0L
     var sensitivities = mutableListOf<Float>()
     var steps = mutableListOf<Int>()
     val stepCount
@@ -60,12 +61,11 @@ class Pedometer {
 
 
     private fun processLastSample() {
-        aFilteredMagnitudes.add(lowPassFilter(aMagnitudes))
-        filter.apply(aMagnitudes.last())
-        aNormalizedMagnitudes.add(filter.prediction / NORMALIZATION_COEFFICIENT)
+        aFilteredMagnitudes.add(filter.apply(aMagnitudes.last()))
+        aNormalizedMagnitudes.add(aFilteredMagnitudes.last() / NORMALIZATION_COEFFICIENT)
         val timeWindowIndex = timeWindowIndex()
         val aRecentNormalizedMagnitudes = aNormalizedMagnitudes.subList(timeWindowIndex, t.size)
-        updateRv(aRecentNormalizedMagnitudes)
+        updateSensitivity(aRecentNormalizedMagnitudes)
         min.add(aRecentNormalizedMagnitudes.min()!!)
         max.add(aRecentNormalizedMagnitudes.max()!!)
         filterSteps()
@@ -77,10 +77,11 @@ class Pedometer {
         val threshold = (min + max) / 2f
         var stepCount = steps.lastOrNull() ?: 0
         sensitivities.add(sensitivity)
-        if ((max - min) > sensitivity) {
+        if (stepNotTooFast() && aboveSensitivity(max, min)) {
             val y = aNormalizedMagnitudes.last()
             if (isAbove && (y < threshold)) {
                 isAbove = false
+                lastStepTime = t.last()
                 stepCount++
             } else if (!isAbove && (y > threshold)) {
                 isAbove = true
@@ -89,13 +90,16 @@ class Pedometer {
         steps.add(stepCount)
     }
 
+    private fun stepNotTooFast() = t.last() - lastStepTime > TIME_WINDOW_NS
+
+    private fun aboveSensitivity(max: Float, min: Float) = (max - min) > sensitivity
 
     private fun timeWindowIndex(): Int {
         return (t.lastIndex downTo 0).firstOrNull { (t.last() - t[it]) > TIME_WINDOW_NS }
                 ?: 0
     }
 
-    private fun updateRv(values: List<Float>) {
+    private fun updateSensitivity(values: List<Float>) {
         var mean = 0f
         var meanSqr = 0f
         for (value in values) {
@@ -106,11 +110,11 @@ class Pedometer {
         if (variance > 0.5f) {
             variance -= 0.5f
         }
-        if (!variance.isNaN()) {
-            filter.R = variance
-            sensitivity = 10 * (Math.sqrt(variance.toDouble()) / (NORMALIZATION_COEFFICIENT * NORMALIZATION_COEFFICIENT)).toFloat()
+        sensitivity = if (!variance.isNaN()) {
+            filter.onVarianceUpdate(variance)
+            (Math.sqrt(variance.toDouble()) / NORMALIZATION_COEFFICIENT).toFloat()
         } else {
-            sensitivity = 1f / 30
+            1f / 30
         }
     }
 
