@@ -15,7 +15,7 @@ class InertialSampler(context: Context) : SensorSampler() {
         }
     var delay = SensorDelay.NORMAL
     private val accelerometerListener = SensorSampleEventListener(acceleration)
-    var samplerListener: InertialSamplerListener? = null
+    var samplerListener: InertialSampleListener? = null
         set(value) {
             field = value
             accelerometerListener.sensorSamplerListener = value
@@ -36,7 +36,7 @@ class InertialSampler(context: Context) : SensorSampler() {
         sensorManager.unregisterListener(accelerometerListener)
     }
 
-    interface InertialSamplerListener {
+    interface InertialSampleListener {
         fun onSampleReceived(sensorSample: SensorSample)
     }
 }

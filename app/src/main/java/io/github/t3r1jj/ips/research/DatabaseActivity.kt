@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.Environment
 import android.support.design.widget.BottomSheetDialog
 import android.support.v7.app.AlertDialog

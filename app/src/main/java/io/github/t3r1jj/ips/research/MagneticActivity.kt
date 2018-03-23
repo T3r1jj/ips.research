@@ -5,8 +5,6 @@ import android.content.Context
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
-import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.LinearLayout.HORIZONTAL
@@ -14,17 +12,15 @@ import android.widget.LinearLayout.VERTICAL
 import android.widget.Toast
 import com.github.mikephil.charting.charts.LineChart
 import io.github.t3r1jj.ips.research.model.Dao
-import io.github.t3r1jj.ips.research.model.data.MagneticDataset
 import io.github.t3r1jj.ips.research.model.collector.MagneticSampler
 import io.github.t3r1jj.ips.research.model.collector.SensorDelay
+import io.github.t3r1jj.ips.research.model.data.MagneticDataset
 import io.github.t3r1jj.ips.research.view.RealtimeChart
 import io.github.t3r1jj.ips.research.view.RenderableView
-import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL
 import trikita.anvil.DSL.*
-
 
 class MagneticActivity : AppCompatActivity() {
     var submitted = false
@@ -43,7 +39,7 @@ class MagneticActivity : AppCompatActivity() {
                     ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
             chartRenderer.addChartEntry(gravityChart, sampler.gravity.lastOrNull()?.data
                     ?: arrayOf(0f, 0f, 0f).toFloatArray())
-            Thread.sleep(CHARTING_DELAY)
+            Thread.sleep(chartingDelay)
             return sampler.isRunning
         }
     }

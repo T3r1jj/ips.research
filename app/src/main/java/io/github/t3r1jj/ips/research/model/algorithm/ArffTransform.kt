@@ -105,11 +105,6 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
                 objects[it]!!.add(toObject(toObjectValues(mutableMapOf()), UNKNOWN_PLACE))
             }
         }
-
-        println("TRAIN SIZE: " + objects[trainDevices]!!.size)
-        testDevices.forEach {
-            println("TEST SIZE: " + objects[it]!!.size)
-        }
     }
 
     private fun padWithNoSignalObjects(dataObjects: MutableList<List<Int>>, data: WifiDataset) {
@@ -213,13 +208,7 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
     }
 
     private fun toObject(attributeValues: List<Number>, classValue: String): String {
-        return attributeValues.map {
-            if (opts.attributeDataType == AttributeDataType.dBm) {
-                it
-            } else {
-                dBmToPikoWatt(it.toDouble())
-            }
-        }.joinToString(",", "", "," + classValue)
+        return attributeValues.joinToString(",", "", "," + classValue)
     }
 
     private fun toObjects(attributeValues: List<List<Number>>, classValue: String): List<String> {
@@ -228,6 +217,12 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
 
     private fun toObjectValues(attributeValues: MutableMap<String, Int>) = attributes.map {
         attributeValues[it] ?: NO_SIGNAL
+    }.map {
+        if (opts.attributeDataType == AttributeDataType.dBm) {
+            it
+        } else {
+            dBmToPikoWatt(it.toDouble())
+        }
     }
 
 
@@ -250,7 +245,7 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
         writer.println("@ATTRIBUTE place " + classes.sorted().joinToString(",", "{", "}"));
         writer.println()
         writer.println("@Data")
-        objects[device]!!.forEach(writer::println)
+        objects[device]?.forEach(writer::println)
         writer.close()
         outputStream.close()
     }

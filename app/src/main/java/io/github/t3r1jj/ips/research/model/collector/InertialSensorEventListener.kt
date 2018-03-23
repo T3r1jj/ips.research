@@ -5,7 +5,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 
 open class SensorSampleEventListener(protected val samples: MutableList<SensorSample>) : SensorEventListener {
-    var sensorSamplerListener: InertialSampler.InertialSamplerListener? = null
+    var sensorSamplerListener: InertialSampler.InertialSampleListener? = null
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
     }
 

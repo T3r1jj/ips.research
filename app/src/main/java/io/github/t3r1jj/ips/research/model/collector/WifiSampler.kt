@@ -30,6 +30,7 @@ class WifiSampler(val context: Context) {
             field = value
             Anvil.render()
         }
+    var listener : WifiFingerprintListener? = null
 
     private val wifiManager: WifiManager
         get() {
@@ -73,12 +74,13 @@ class WifiSampler(val context: Context) {
 
         override fun onReceive(c: Context, intent: Intent) {
             sampleIndex++
-            wifiManager.scanResults.forEach {
-                val fingerprint = createFingerprint(it)
-                fingerprints.add(fingerprint)
+            val currentFingerprints = wifiManager.scanResults.map {
+                createFingerprint(it)
             }
+            fingerprints.addAll(currentFingerprints)
+            listener?.onFingerprintsReceived(currentFingerprints)
             Thread.sleep(samplingRate.delay)
-            if (sampleIndex < sampleCount) {
+            if (sampleIndex != sampleCount) {
                 wifiManager.scanResults.clear()
                 if (!wifiManager.startScan()) {
                     throw RuntimeException("startScan() fail")
@@ -87,5 +89,9 @@ class WifiSampler(val context: Context) {
                 stopSampling()
             }
         }
+    }
+
+    interface WifiFingerprintListener {
+        fun onFingerprintsReceived(fingerprints: List<Fingerprint>)
     }
 }

@@ -17,12 +17,12 @@ import trikita.anvil.Anvil
 abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
     companion object {
         private const val VISIBLE_SAMPLE_COUNT = 100
-        const val CHARTING_FREQUENCY = 10f
-        val CHARTING_DELAY
-            get() = (1000 / CHARTING_FREQUENCY).toLong()
     }
 
-    var labels = arrayOf("ABS", "X", "Y", "Z")
+    var labels = arrayOf("X", "Y", "Z", "ABS")
+    var chartingFrequency = 10f
+    protected val chartingDelay
+        get() = (1000 / chartingFrequency).toLong()
 
     private var renderInitiator: Thread? = null
 
@@ -46,13 +46,13 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         chart.setScaleEnabled(true)
         chart.setDrawGridBackground(false)
         chart.setPinchZoom(true)
-        chart.setBackgroundColor(Color.LTGRAY)
+        chart.setBackgroundColor(Color.WHITE)
         val data = LineData()
-        data.setValueTextColor(Color.WHITE)
+        data.setValueTextColor(Color.BLACK)
         chart.data = data
         val legend = chart.legend
         legend.form = Legend.LegendForm.LINE
-        legend.textColor = Color.WHITE
+        legend.textColor = Color.BLACK
         val xAxis = chart.xAxis
         xAxis.setDrawGridLines(false)
         xAxis.setAvoidFirstLastClipping(true)
@@ -83,11 +83,11 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
                     set = createSet(index)
                     data.addDataSet(set)
                 }
-                val x = set.entryCount.toFloat() / CHARTING_FREQUENCY
+                val x = set.entryCount.toFloat() / chartingFrequency
                 data.addEntry(Entry(x, values[index]), index)
                 data.notifyDataChanged()
                 chart.notifyDataSetChanged()
-                chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / CHARTING_FREQUENCY)
+                chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / chartingFrequency)
                 chart.moveViewToX(x)
             }
         }
@@ -116,14 +116,14 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         if (data != null) {
             var set = data.getDataSetByIndex(0)
             if (set == null) {
-                set = createSet(3)
+                set = createSet(0)
                 data.addDataSet(set)
             }
-            val x = set.entryCount.toFloat() / CHARTING_FREQUENCY
+            val x = set.entryCount.toFloat() / chartingFrequency
             data.addEntry(Entry(x, value), 0)
             data.notifyDataChanged()
             chart.notifyDataSetChanged()
-            chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / CHARTING_FREQUENCY)
+            chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / chartingFrequency)
             chart.moveViewToX(x)
         }
     }
@@ -133,10 +133,10 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         set.axisDependency = YAxis.AxisDependency.LEFT
         set.color = ColorTemplate.MATERIAL_COLORS[index]
         set.setCircleColor(ColorTemplate.MATERIAL_COLORS[index])
+        set.setCircleColorHole(ColorTemplate.MATERIAL_COLORS[index])
+        set.fillColor = ColorTemplate.MATERIAL_COLORS[index]
         set.lineWidth = 1.5f
         set.circleRadius = 2.0f
-        set.fillAlpha = 65
-        set.fillColor = ColorTemplate.MATERIAL_COLORS[index]
         set.highLightColor = Color.rgb(255, 0, 0)
         set.valueTextColor = Color.BLACK
         set.valueTextSize = 9f
@@ -151,7 +151,7 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         renderInitiator = Thread({
             try {
                 while (!Thread.interrupted() && render()) {
-                    Thread.sleep(CHARTING_DELAY)
+                    Thread.sleep(chartingDelay)
                 }
                 Anvil.render()
             } catch (e: InterruptedException) {

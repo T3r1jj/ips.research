@@ -56,6 +56,7 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
     private fun initGroups(): Map<String, List<WifiDataset>> {
         val groups = arffActivity.wifiData()
                 .groupBy { "ALL " + it.device }
+                .toSortedMap()
                 .plus(arffActivity.wifiData().groupBy {
                     dateFormatter.format(it.timestamp) + " " + it.device
                 })
