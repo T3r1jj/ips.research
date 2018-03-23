@@ -7,10 +7,10 @@ import io.github.t3r1jj.ips.research.model.data.Fingerprint
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import java.io.OutputStream
 import java.io.PrintWriter
-import java.lang.IndexOutOfBoundsException
 import java.util.*
 
-class ArffTransform(private val ssidRegex: Regex) {
+class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
+    constructor(ssidRegex: Regex) : this(ssidRegex, Options())
 
     val attributes = LinkedHashSet<String>()
     val classes = mutableSetOf<String>()
@@ -20,17 +20,25 @@ class ArffTransform(private val ssidRegex: Regex) {
         get() = _trainDevices.joinToString(",", "train.")
     var startTimestamp = mutableMapOf<String, Long>()
     var endTimestamp = mutableMapOf<String, Long>()
-    var addUnknownClassForTraining = false
-    var addUnknownClassForTesting = false
-    var padWithNoSignal = false
-    var averageTests = true
-    var averageTraining = false
-    var attributeDataType = AttributeDataType.POWER
     var type = ""
     private var _trainDevices = mutableSetOf<String>()
 
+    class Options(var attributeDataType: ArffTransform.AttributeDataType,
+                  var trainProcessing: ArffTransform.Processing,
+                  var testProcessing: ArffTransform.Processing) {
+        var addUnknownClassForTraining = false
+        var addUnknownClassForTesting = false
+        var padWithNoSignal = false
+
+        constructor() : this(AttributeDataType.POWER, Processing.MEDIAN, Processing.MEDIAN)
+    }
+
     enum class AttributeDataType {
         dBm, POWER
+    }
+
+    enum class Processing {
+        NONE, AVERAGE, MEDIAN
     }
 
     companion object {
@@ -62,60 +70,63 @@ class ArffTransform(private val ssidRegex: Regex) {
         trainData.forEach { data ->
             extractMetadata(trainDevices, data.timestamp, data.type)
             val dataObjects = groupByIterations(data)
-            if (padWithNoSignal) {
+            if (opts.padWithNoSignal) {
                 padWithNoSignalObjects(dataObjects, data)
             }
 
-            if (averageTraining) {
-                objects[trainDevices]!!.add(avg(dataObjects).joinToString(",") + "," + data.place)
-            } else {
-                objects[trainDevices]!!.addAll(dataObjects)
+            when (opts.trainProcessing) {
+                Processing.MEDIAN -> objects[trainDevices]!!.addAll(toObjects(median(dataObjects, 10), data.place))
+                Processing.AVERAGE -> objects[trainDevices]!!.add(toObject(avg(dataObjects), data.place))
+                else -> objects[trainDevices]!!.addAll(toObjects(dataObjects, data.place))
             }
         }
 
         testData.forEach { data ->
             val dataObjects = groupByIterations(data)
-            if (padWithNoSignal) {
+            if (opts.padWithNoSignal) {
                 padWithNoSignalObjects(dataObjects, data)
             }
-            if (averageTests) {
-                objects[data.device]!!.add(avg(dataObjects).joinToString(",") + "," + data.place)
-            } else {
-                objects[data.device]!!.addAll(dataObjects)
+            when (opts.testProcessing) {
+                Processing.MEDIAN -> objects[data.device]!!.addAll(toObjects(median(dataObjects, 10), data.place))
+                Processing.AVERAGE -> objects[data.device]!!.add(toObject(avg(dataObjects), data.place))
+                else -> objects[data.device]!!.addAll(toObjects(dataObjects, data.place))
             }
         }
 
-        if (addUnknownClassForTraining) {
+        if (opts.addUnknownClassForTraining) {
             val avgObjectsPerClass = objects[trainDevices]!!.size / classes.size
             for (i in 0 until avgObjectsPerClass) {
-                objects[trainDevices]!!.add(toObject(mutableMapOf(), UNKNOWN_PLACE).toString())
+                objects[trainDevices]!!.add(toObject(toObjectValues(mutableMapOf()), UNKNOWN_PLACE))
                 classes.add(UNKNOWN_PLACE)
             }
         }
-        if (addUnknownClassForTesting) {
+        if (opts.addUnknownClassForTesting) {
             testDevices.forEach {
-                objects[it]!!.add(toObject(mutableMapOf(), UNKNOWN_PLACE).toString())
+                objects[it]!!.add(toObject(toObjectValues(mutableMapOf()), UNKNOWN_PLACE))
             }
         }
-    }
 
-    private fun padWithNoSignalObjects(dataObjects: MutableList<String>, data: WifiDataset) {
-        val objectCount = dataObjects.size
-        for (i in objectCount until data.iterations) {
-            dataObjects.add(toObject(mutableMapOf(), data.place).toString())
+        println("TRAIN SIZE: " + objects[trainDevices]!!.size)
+        testDevices.forEach {
+            println("TEST SIZE: " + objects[it]!!.size)
         }
     }
 
-    private fun groupByIterations(data: WifiDataset): MutableList<String> {
-        val datasetObjects = mutableListOf<String>()
+    private fun padWithNoSignalObjects(dataObjects: MutableList<List<Int>>, data: WifiDataset) {
+        for (i in dataObjects.size until data.iterations) {
+            dataObjects.add(toObjectValues(mutableMapOf()))
+        }
+    }
+
+    private fun groupByIterations(data: WifiDataset): MutableList<List<Int>> {
+        val datasetObjects = mutableListOf<List<Int>>()
         var attributeValues = mutableMapOf<String, Int>()
         var lastTimestamp = 0L
         data.fingerprints
                 .sortedBy { it.timestamp }
                 .forEach {
                     if (attributeValues.containsKey(it.bssid) || isNewSamplingGroup(it, lastTimestamp)) {
-                        val objectBuilder = toObject(attributeValues, data.place)
-                        datasetObjects.add(objectBuilder.toString())
+                        datasetObjects.add(toObjectValues(attributeValues))
                         attributeValues = mutableMapOf()
                     } else {
                         attributeValues.put(it.bssid, it.rssi)
@@ -123,8 +134,7 @@ class ArffTransform(private val ssidRegex: Regex) {
                     lastTimestamp = it.timestamp
                 }
         if (attributeValues.isNotEmpty()) {
-            val objectBuilder = toObject(attributeValues, data.place)
-            datasetObjects.add(objectBuilder.toString())
+            datasetObjects.add(toObjectValues(attributeValues))
         }
         return datasetObjects
     }
@@ -158,46 +168,68 @@ class ArffTransform(private val ssidRegex: Regex) {
         endTimestamp[device] = Long.MIN_VALUE
     }
 
-    private fun avg(datasetObjects: MutableList<String>): List<Int> {
-        val sums = mutableListOf<Int>()
+    fun avg(datasetObjects: MutableList<List<Int>>): List<Float> {
+        val sums = FloatArray(datasetObjects.first().size)
         for (obj in datasetObjects) {
-            val values = obj.split(",")
-            for (i in 0 until values.size - 1) {
-                try {
-                    sums[i] += values[i].toInt()
-                } catch (ex: IndexOutOfBoundsException) {
-                    sums.add(values[i].toInt())
-                }
+            for (i in 0 until obj.size) {
+                sums[i] += obj[i].toFloat()
             }
         }
         for (i in 0 until sums.size) {
             sums[i] = sums[i] / datasetObjects.size
         }
-        return sums
+        return sums.asList()
+    }
+
+    fun median(datasetObjects: MutableList<List<Int>>, medianLength: Int): List<List<Float>> {
+        val groupedObjects = datasetObjects
+                .withIndex()
+                .groupBy { it.index / medianLength }
+                .map { it.value.map { it.value } }
+        val outObjects = mutableListOf<List<Float>>()
+        for (group in groupedObjects) {
+            val matrix = Array<MutableList<Int>>(group.first().size, { _ -> mutableListOf() })
+            for (obj in group) {
+                for (i in 0 until obj.size) {
+                    matrix[i].add(obj[i])
+                }
+            }
+            outObjects.add(matrix.map { median(it) })
+        }
+        return outObjects
+    }
+
+    private fun median(values: List<Int>): Float {
+        val sortedValues = values.sorted()
+        return if (values.size % 2 == 0) {
+            (sortedValues[values.size / 2] + sortedValues[values.size / 2 - 1]) / 2f
+        } else {
+            sortedValues[values.size / 2].toFloat()
+        }
     }
 
     private fun isNewSamplingGroup(fingerprint: Fingerprint, previousTimestamp: Long): Boolean {
         return previousTimestamp != 0L && (fingerprint.timestamp - previousTimestamp >= WifiActivity.SamplingRate._500MS.delay)
     }
 
-    private fun toObject(attributeValues: MutableMap<String, Int>, classValue: String): StringBuilder {
-        val objectBuilder = StringBuilder()
-        var prefix = ""
-        attributes.forEach {
-            val value = attributeValues[it] ?: NO_SIGNAL
-            objectBuilder.append(prefix)
-            if (attributeDataType == AttributeDataType.dBm) {
-                objectBuilder.append(value)
+    private fun toObject(attributeValues: List<Number>, classValue: String): String {
+        return attributeValues.map {
+            if (opts.attributeDataType == AttributeDataType.dBm) {
+                it
             } else {
-                objectBuilder.append(dBmToPikoWatt(value.toDouble()))
+                dBmToPikoWatt(it.toDouble())
             }
-            prefix = ","
-        }
-        objectBuilder
-                .append(prefix)
-                .append(classValue)
-        return objectBuilder
+        }.joinToString(",", "", "," + classValue)
     }
+
+    private fun toObjects(attributeValues: List<List<Number>>, classValue: String): List<String> {
+        return attributeValues.map { toObject(it, classValue) }
+    }
+
+    private fun toObjectValues(attributeValues: MutableMap<String, Int>) = attributes.map {
+        attributeValues[it] ?: NO_SIGNAL
+    }
+
 
     fun writeToFile(outputStream: OutputStream, device: String) {
         val writer = PrintWriter(outputStream)

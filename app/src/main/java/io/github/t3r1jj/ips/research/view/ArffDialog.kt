@@ -7,27 +7,68 @@ import android.widget.CompoundButton
 import android.widget.LinearLayout
 import io.github.t3r1jj.ips.research.DatabaseActivity
 import io.github.t3r1jj.ips.research.model.algorithm.ArffTransform
+import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import trikita.anvil.BaseDSL
 import trikita.anvil.DSL
 import trikita.anvil.DSL.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 @SuppressLint("ViewConstructor")
-class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : RenderableView(context) {
-    private val deviceAdapter = ArrayAdapter<String>(context,
+class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) : RenderableView(context) {
+
+    companion object {
+        val dateFormatter = createDateFormat()
+
+        @SuppressLint("SimpleDateFormat")
+        private fun createDateFormat(): SimpleDateFormat {
+            val dateFormatter = SimpleDateFormat("dd/MM")
+            dateFormatter.timeZone = Calendar.getInstance().timeZone
+            return dateFormatter
+        }
+    }
+
+    private val groups = initGroups()
+
+    private val groupAdapter = ArrayAdapter<String>(context,
             io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
-            arffActivity.dao.findAll().values.map { it.device }.distinct().sorted())
+            groups.keys.toList())
     private val dataTypeAdapter = ArrayAdapter<ArffTransform.AttributeDataType>(context,
             io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
             ArffTransform.AttributeDataType.values())
+    private val trainAdapter = ArrayAdapter<ArffTransform.Processing>(context,
+            io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
+            ArffTransform.Processing.values())
+    private val testAdapter = ArrayAdapter<ArffTransform.Processing>(context,
+            io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
+            ArffTransform.Processing.values())
     private val firstRegex = "(eduroam)"
     private val secondRegex = "(eduroam|dziekanat|pb-guest|.*hotspot.*)"
     private var isFirstSwitchOn = true
     private var isSecondSwitchOn = false
     private var isThirdSwitchOn = false
     private var customRegex = ""
-    private var device = deviceAdapter.getItem(0)
-    private var attributeDataType = dataTypeAdapter.getItem(0)
-    private var averageTests = false
+    private var group = groupAdapter.getItem(0)
+    private var opts = ArffTransform.Options(dataTypeAdapter.getItem(0),
+            trainAdapter.getItem(0),
+            testAdapter.getItem(0))
+
+    private fun initGroups(): Map<String, List<WifiDataset>> {
+        val groups = arffActivity.wifiData()
+                .groupBy { "ALL " + it.device }
+                .plus(arffActivity.wifiData().groupBy {
+                    dateFormatter.format(it.timestamp) + " " + it.device
+                })
+        val pairs = mutableSetOf<Pair<String, String>>()
+        for (key in groups.keys) {
+            groups.keys
+                    .filter { key != it }
+                    .mapTo(pairs) { Pair(key, it) }
+        }
+        return groups.plus(
+                pairs.map { Pair(it.first + " + " + it.second, groups[it.first]!!.plus(groups[it.second]!!)) }
+        )
+    }
 
     override fun view() {
         linearLayout {
@@ -91,19 +132,17 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                 DSL.orientation(LinearLayout.HORIZONTAL)
                 textView {
                     size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.text("Training dataset from device (the rest will be testing):")
+                    DSL.text("Training dataset group (remaining will be tested):")
                 }
             }
             spinner {
-                padding(dip(8))
                 size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.adapter(deviceAdapter)
+                DSL.adapter(groupAdapter)
                 onItemSelected { a, _, _, _ ->
-                    device = a.selectedItem.toString()
+                    group = a.selectedItem.toString()
                 }
             }
             linearLayout {
-                padding(dip(8))
                 BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
                 DSL.orientation(LinearLayout.HORIZONTAL)
                 textView {
@@ -112,27 +151,40 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                 }
 
                 spinner {
-                    padding(dip(8))
                     size(BaseDSL.MATCH, BaseDSL.WRAP)
                     DSL.adapter(dataTypeAdapter)
                     onItemSelected { a, _, _, _ ->
-                        attributeDataType = a.selectedItem as ArffTransform.AttributeDataType
+                        opts.attributeDataType = a.selectedItem as ArffTransform.AttributeDataType
                     }
                 }
             }
             linearLayout {
-                padding(dip(8))
                 BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
                 DSL.orientation(LinearLayout.HORIZONTAL)
                 textView {
                     size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Average test sets:")
+                    DSL.text("Train processing:")
                 }
-                switchView {
+                spinner {
                     size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.checked(averageTests)
-                    onCheckedChange { _: CompoundButton?, b: Boolean ->
-                        averageTests = b
+                    adapter(trainAdapter)
+                    onItemSelected { a, _, _, _ ->
+                        opts.trainProcessing = a.selectedItem as ArffTransform.Processing
+                    }
+                }
+            }
+            linearLayout {
+                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
+                DSL.orientation(LinearLayout.HORIZONTAL)
+                textView {
+                    size(BaseDSL.WRAP, BaseDSL.WRAP)
+                    DSL.text("Test processing:")
+                }
+                spinner {
+                    size(BaseDSL.MATCH, BaseDSL.WRAP)
+                    adapter(testAdapter)
+                    onItemSelected { a, _, _, _ ->
+                        opts.testProcessing = a.selectedItem as ArffTransform.Processing
                     }
                 }
             }
@@ -148,7 +200,7 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                             isSecondSwitchOn -> secondRegex
                             else -> customRegex
                         }
-                        arffActivity.generateArff(regex, attributeDataType, averageTests, device)
+                        arffActivity.generateArff(regex, opts, groups[group]!!)
                     }
                     BaseDSL.weight(1f)
                 }
@@ -162,7 +214,7 @@ class ArffDialog(context: Context, val arffActivity: DatabaseActivity) : Rendera
                             isSecondSwitchOn -> secondRegex
                             else -> customRegex
                         }
-                        arffActivity.testArff(regex, attributeDataType, averageTests, device)
+                        arffActivity.testArff(regex, opts, groups[group]!!)
                     }
                 }
 

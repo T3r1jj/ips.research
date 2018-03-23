@@ -395,12 +395,11 @@ class DatabaseActivity : AppCompatActivity() {
         }
     }
 
-    internal fun generateArff(regex: String, attributeDataType: ArffTransform.AttributeDataType, averageTests: Boolean, device: String) {
-        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
-        aff.attributeDataType = attributeDataType
-        aff.averageTests = averageTests
+    internal fun generateArff(regex: String, opts: ArffTransform.Options, trainData: List<WifiDataset>) {
+        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE), opts)
         val wifiData = wifiData()
-        aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
+        val testData = wifiData.filter { superIt -> trainData.firstOrNull { it.timestamp == superIt.timestamp } == null }
+        aff.apply(trainData, testData)
         try {
             var file: File?
             val filePaths = mutableListOf<String>()
@@ -421,12 +420,11 @@ class DatabaseActivity : AppCompatActivity() {
         }
     }
 
-    internal fun testArff(regex: String, attributeDataType: ArffTransform.AttributeDataType, averageTests: Boolean, device: String) {
-        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE))
-        aff.attributeDataType = attributeDataType
-        aff.averageTests = averageTests
+    internal fun testArff(regex: String, opts: ArffTransform.Options, trainData: List<WifiDataset>) {
+        val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE), opts)
         val wifiData = wifiData()
-        aff.apply(wifiData.filter { it.device == device }, wifiData.filterNot { it.device == device })
+        val testData = wifiData.filter { superIt -> trainData.firstOrNull { it.timestamp == superIt.timestamp } == null }
+        aff.apply(trainData, testData)
         val tester = WekaPreTester(aff)
         val text = "Weka pre test accuracy:\n" + tester.knnTest().joinToString("%\n\t", "kNN:\n\t", "%\n") +
                 tester.customTest().joinToString("%\n\t", "Custom:\n\t", "%\n\n")
@@ -436,7 +434,7 @@ class DatabaseActivity : AppCompatActivity() {
         bottomSheet.show()
     }
 
-    private fun wifiData(): List<WifiDataset> {
+    internal fun wifiData(): List<WifiDataset> {
         return dao.findAll().values
                 .filter { it.type == DatasetType.WIFI }
                 .map { it as WifiDataset }
