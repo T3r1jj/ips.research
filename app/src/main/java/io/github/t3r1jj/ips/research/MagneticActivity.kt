@@ -1,11 +1,9 @@
 package io.github.t3r1jj.ips.research
 
-import android.R
 import android.content.Context
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
-import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
@@ -15,11 +13,11 @@ import io.github.t3r1jj.ips.research.model.Dao
 import io.github.t3r1jj.ips.research.model.collector.MagneticSampler
 import io.github.t3r1jj.ips.research.model.collector.SensorDelay
 import io.github.t3r1jj.ips.research.model.data.MagneticDataset
+import io.github.t3r1jj.ips.research.view.I18nArrayAdapter
 import io.github.t3r1jj.ips.research.view.RealtimeChart
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
-import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 
 class MagneticActivity : AppCompatActivity() {
@@ -50,12 +48,12 @@ class MagneticActivity : AppCompatActivity() {
         chartRenderer = RealtimeChartRenderer(this)
         sampler = MagneticSampler(this)
         magneticFieldChart = chartRenderer.createChart(-75f, 75f)
-        magneticFieldChart.description.text = "Magnetic field (uT)"
+        magneticFieldChart.description.text = getString(R.string.magnetic_field_label)
         magneticFingerprintChart = chartRenderer.createChart(0f, 150f)
-        magneticFingerprintChart.description.text = "Magnetic field magnitude (uT)"
+        magneticFingerprintChart.description.text = getString(R.string.magnetic_field_magnitude_label)
         gravityChart = chartRenderer.createChart(-15f, 15f)
-        gravityChart.description.text = "Gravity (m/s2 to s)"
-        val delayAdapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
+        gravityChart.description.text = getString(R.string.gravity_label)
+        val delayAdapter = I18nArrayAdapter(this, SensorDelay.values())
 
         setContentView(object : RenderableView(this) {
             override fun view() {
@@ -69,7 +67,7 @@ class MagneticActivity : AppCompatActivity() {
                         orientation(LinearLayout.HORIZONTAL)
                         textView {
                             size(WRAP, WRAP)
-                            text("Route name: ")
+                            text(R.string.route_name)
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -85,7 +83,7 @@ class MagneticActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
-                            text("Number of samples: ")
+                            text(R.string.number_of_samples)
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -101,9 +99,9 @@ class MagneticActivity : AppCompatActivity() {
                     }
                     linearLayout {
                         size(MATCH, WRAP)
-                        DSL.orientation(HORIZONTAL)
+                        orientation(HORIZONTAL)
                         textView {
-                            text("Sensor delay:")
+                            text(R.string.sensor_delay)
                             size(WRAP, WRAP)
                         }
                         spinner {
@@ -121,7 +119,7 @@ class MagneticActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         button {
                             size(0, WRAP)
-                            text("Sample")
+                            text(R.string.sample)
                             onClick {
                                 stopSampling()
                                 chartRenderer.clearChart(magneticFieldChart)
@@ -134,7 +132,7 @@ class MagneticActivity : AppCompatActivity() {
                         }
                         button {
                             size(0, WRAP)
-                            text("Stop")
+                            text(R.string.stop)
                             onClick {
                                 stopSampling()
                             }
@@ -147,7 +145,7 @@ class MagneticActivity : AppCompatActivity() {
                         size(MATCH, 0)
                         orientation(VERTICAL)
                         textView {
-                            text("Real time data:")
+                            text(R.string.real_time_data)
                             size(WRAP, WRAP)
                         }
                         linearLayout {
@@ -178,10 +176,10 @@ class MagneticActivity : AppCompatActivity() {
 
                     button {
                         size(MATCH, WRAP)
-                        text("Submit")
+                        text(R.string.submit)
                         onClick {
                             if (route.isBlank()) {
-                                Toast.makeText(this@MagneticActivity, "Please provide a route name for classification", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@MagneticActivity, R.string.route_name_required, Toast.LENGTH_LONG).show()
                             } else {
                                 val data = MagneticDataset(route, sampler.magneticField, sampler.gravity)
                                 data.sensorDelay = sampler.delay

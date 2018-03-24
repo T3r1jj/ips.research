@@ -18,7 +18,7 @@
         <activity
             android:name="io.github.t3r1jj.ips.research.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="Indoor Positioning System"
+            android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,29 +30,29 @@
             android:name="io.github.t3r1jj.ips.research.InertialActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
-            android:label="Inertial Sampling"
+            android:label="@string/inertial_sampling"
             android:screenOrientation="portrait" />
         <activity
             android:name="io.github.t3r1jj.ips.research.WifiActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
-            android:label="Wifi Fingerprinting"
+            android:label="@string/wifi_fingerprinting"
             android:screenOrientation="portrait" />
         <activity
             android:name="io.github.t3r1jj.ips.research.MagneticActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
-            android:label="Magnetic Sampling/Fingerprinting"
+            android:label="@string/magnetic_sampling_fingerprinting"
             android:screenOrientation="portrait" />
         <activity
             android:name="io.github.t3r1jj.ips.research.DatabaseActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="Collected Data" />
+            android:label="@string/collected_data" />
         <activity
             android:name="io.github.t3r1jj.ips.research.OnlineActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:keepScreenOn="true"
-            android:label="Online model test" />
+            android:label="@string/online_model_testing" />
     </application>
 
 </manifest>

@@ -30,7 +30,7 @@ class WifiSampler(val context: Context) {
             field = value
             Anvil.render()
         }
-    var listener : WifiFingerprintListener? = null
+    var listener: WifiFingerprintListener? = null
 
     private val wifiManager: WifiManager
         get() {

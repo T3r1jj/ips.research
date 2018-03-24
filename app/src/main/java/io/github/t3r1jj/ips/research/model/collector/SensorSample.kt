@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 
-data class SensorSample @JsonCreator constructor(@JsonProperty("data") val data: FloatArray, @JsonProperty("timestamp") val timestamp: Long) {
+data class SensorSample @JsonCreator constructor(@JsonProperty("data") val data: FloatArray,
+                                                 @JsonProperty("timestamp") val timestamp: Long) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

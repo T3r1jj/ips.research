@@ -1,6 +1,7 @@
 package io.github.t3r1jj.ips.research.model.data
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -30,7 +31,7 @@ open class Dataset(val type: DatasetType) {
 
 
         private fun capitalize(text: String?): String {
-            if (text == null || text.length == 0) {
+            if (text == null || text.isEmpty()) {
                 return ""
             }
             val first = text[0]
@@ -46,6 +47,14 @@ open class Dataset(val type: DatasetType) {
     val device = getDeviceName()
 
     override fun toString(): String {
-        return "[" + type.toString() + "] " + device + " (" + dateFormatter.format(timestamp) + ")"
+        return "[" + type.toString() + "] " +
+                device.replace("UNKNOWN ", "").replace("Unknown ", "") +
+                " (" + dateFormatter.format(timestamp) + ")"
+    }
+
+    open fun toString(context: Context): String {
+        return "[" + type.toString(context) + "] " +
+                device.replace("UNKNOWN ", "").replace("Unknown ", "") +
+                " (" + dateFormatter.format(timestamp) + ")"
     }
 }

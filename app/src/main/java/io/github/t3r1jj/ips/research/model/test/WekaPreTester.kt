@@ -43,7 +43,7 @@ class WekaPreTester(val arff: ArffTransform) {
                     val trainDeviceVals = trainDeviceObject.split(",")
                     var dist = 0.toDouble() + (0 until testVals.lastIndex)
                             .filter {
-                                if (arff.opts.attributeDataType == ArffTransform.AttributeDataType.POWER) {
+                                if (arff.opts.attributeDataType == ArffTransform.AttributeDataType.pWatt) {
                                     Math.abs(ArffTransform.pikoWattToDBm(trainDeviceVals[it].toDouble()) - ArffTransform.pikoWattToDBm(testVals[it].toDouble())) > 5
                                 } else {
                                     Math.abs(trainDeviceVals[it].toDouble() - testVals[it].toDouble()) > 5

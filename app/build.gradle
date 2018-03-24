@@ -42,7 +42,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
     implementation 'com.github.angads25:filepicker:1.1.1'
-    implementation project(path: ":weka")
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.android.support:design:26.1.0'
+    implementation project(path: ":weka")
 }

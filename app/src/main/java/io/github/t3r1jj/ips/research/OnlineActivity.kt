@@ -20,10 +20,10 @@ import io.github.t3r1jj.ips.research.model.collector.WifiSampler
 import io.github.t3r1jj.ips.research.model.data.DatasetType
 import io.github.t3r1jj.ips.research.model.data.Fingerprint
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
+import io.github.t3r1jj.ips.research.view.I18nUtils
 import io.github.t3r1jj.ips.research.view.RealtimeChart
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.Anvil
-import trikita.anvil.BaseDSL
 import trikita.anvil.DSL.*
 import weka.classifiers.bayes.BayesNet
 
@@ -39,8 +39,8 @@ class OnlineActivity : AppCompatActivity() {
     lateinit var sensitivityChart: LineChart
     lateinit var pedometer: Pedometer
     private lateinit var chartRenderer: RealtimeChartRenderer
-    private val pedometerChartLabels = arrayOf("aNorm", "min", "max", "threshold")
-    private val sensitivityChartLabels = arrayOf("sensitivity", "max-min")
+    private lateinit var pedometerChartLabels: Array<String>
+    private lateinit var sensitivityChartLabels: Array<String>
     private lateinit var trainSet: List<WifiDataset>
 
     private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
@@ -75,30 +75,34 @@ class OnlineActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pedometerChartLabels = arrayOf("aNorm", "min", "max", getString(R.string.threshold))
+        sensitivityChartLabels = arrayOf(getString(R.string.sensitivity), "max-min")
         trainSet = Dao(this).findAll().values
                 .filter { it.type == DatasetType.WIFI }
                 .map { it as WifiDataset }
         try {
             navigator.train(trainSet)
         } catch (rte: RuntimeException) {
-            Toast.makeText(this@OnlineActivity, "Error: " + rte.toString(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@OnlineActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, rte),
+                    Toast.LENGTH_LONG).show()
             place = "null"
         }
         wifiSampler = WifiSampler(this)
         chartRenderer = RealtimeChartRenderer(this)
         inertialSampler = InertialSampler(this)
         pedometerChart = chartRenderer.createChart(0.5f, 1.5f)
-        pedometerChart.description.text = "Pedometer algorithm (m/s^2 to s)"
+        pedometerChart.description.text = getString(R.string.pedometer_alg_label)
         sensitivityChart = chartRenderer.createChart(0f, 1.5f)
-        sensitivityChart.description.text = "Pedometer sensitivity (m/s^2 to s)"
+        sensitivityChart.description.text = getString(R.string.pedometer_sens_label)
         setContentView(object : RenderableView(this) {
             override fun view() {
                 linearLayout {
+                    padding(dip(8))
                     size(MATCH, MATCH)
                     orientation(LinearLayout.VERTICAL)
                     textView {
                         size(MATCH, WRAP)
-                        text("WiFi Position")
+                        text(R.string.wifi_position)
                         textSize(sip(16f))
                         textColor(ColorStateList.valueOf(Color.BLACK))
                         gravity(CENTER_HORIZONTAL)
@@ -106,8 +110,7 @@ class OnlineActivity : AppCompatActivity() {
                     textView {
                         size(MATCH, WRAP)
                         padding(dip(8))
-                        text("Your location will be predicted based on collected WiFi data\nand last " +
-                                navigator.fingerprints.size + " WiFi scans (total: " + totalScans + ")" )
+                        text(getString(R.string.wifi_online_test_description, navigator.fingerprints.size, totalScans))
                         gravity(CENTER_HORIZONTAL)
                     }
 
@@ -117,10 +120,11 @@ class OnlineActivity : AppCompatActivity() {
                         padding(dip(8), 0, 0, 0)
                         textView {
                             size(WRAP, WRAP)
-                            text("Place: ")
+                            text(R.string.place)
                         }
                         textView {
                             size(WRAP, WRAP)
+                            padding(dip(8), 0, 0, 0)
                             text(getFormattedPlace())
                             textColor(ColorStateList.valueOf(Color.BLACK))
                         }
@@ -128,7 +132,7 @@ class OnlineActivity : AppCompatActivity() {
                     textView {
                         padding(0, dip(16), 0, 0)
                         size(MATCH, WRAP)
-                        text("Pedometer")
+                        text(R.string.pedometer)
                         textSize(sip(16f))
                         textColor(ColorStateList.valueOf(Color.BLACK))
                         gravity(CENTER_HORIZONTAL)
@@ -139,32 +143,33 @@ class OnlineActivity : AppCompatActivity() {
                         padding(dip(8), 0, 0, 8)
                         textView {
                             size(WRAP, WRAP)
-                            text("Steps: ")
+                            text(R.string.steps)
                         }
                         textView {
                             size(WRAP, WRAP)
+                            padding(dip(8), 0, 0, 0)
                             text(steps.toString())
                             textColor(ColorStateList.valueOf(Color.BLACK))
                         }
                     }
 
                     linearLayout {
-                        size(BaseDSL.MATCH, 0)
+                        size(MATCH, 0)
                         orientation(LinearLayout.VERTICAL)
                         textView {
-                            text("Real time data:")
-                            size(BaseDSL.MATCH, BaseDSL.WRAP)
-                            gravity(BaseDSL.CENTER_HORIZONTAL)
+                            text(R.string.real_time_data)
+                            size(MATCH, WRAP)
+                            gravity(CENTER_HORIZONTAL)
                         }
                         linearLayout {
                             orientation(LinearLayout.VERTICAL)
-                            size(BaseDSL.MATCH, 0)
+                            size(MATCH, 0)
                             customView(pedometerChart)
                             weight(1f)
                         }
                         linearLayout {
                             orientation(LinearLayout.VERTICAL)
-                            size(BaseDSL.MATCH, 0)
+                            size(MATCH, 0)
                             customView(sensitivityChart)
                             weight(1f)
                         }
@@ -177,7 +182,7 @@ class OnlineActivity : AppCompatActivity() {
                         button {
                             size(0, WRAP)
                             weight(1f)
-                            text("Start")
+                            text(R.string.start)
                             enabled(!wifiSampler.running)
                             onClick {
                                 try {
@@ -209,7 +214,9 @@ class OnlineActivity : AppCompatActivity() {
                                     chartRenderer.startRendering()
                                     wifiSampler.startSampling()
                                 } catch (ex: Exception) {
-                                    Toast.makeText(this@OnlineActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@OnlineActivity, getString(R.string.error) +
+                                            I18nUtils.tryI18nException(this@OnlineActivity, ex),
+                                            Toast.LENGTH_LONG).show()
                                 }
                             }
                         }
@@ -217,7 +224,7 @@ class OnlineActivity : AppCompatActivity() {
                             size(0, WRAP)
                             weight(1f)
                             enabled(wifiSampler.running || inertialSampler.isRunning)
-                            text("Stop")
+                            text(R.string.stop)
                             onClick {
                                 stopSampling()
                             }
@@ -229,8 +236,8 @@ class OnlineActivity : AppCompatActivity() {
     }
 
     private fun getFormattedPlace() = when (place) {
-        "?" -> "no data from wifi scan"
-        "null" -> "no data has been collected"
+        "?" -> getString(R.string.no_data_wifi_scan)
+        "null" -> getString(R.string.no_data_wifi_db)
         else -> place
     }
 

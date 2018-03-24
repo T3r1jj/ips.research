@@ -1,15 +1,10 @@
 package io.github.t3r1jj.ips.research
 
-import android.R
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Adapter
-import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.LinearLayout.HORIZONTAL
 import android.widget.LinearLayout.VERTICAL
@@ -18,20 +13,20 @@ import io.github.t3r1jj.ips.research.model.Dao
 import io.github.t3r1jj.ips.research.model.collector.InertialSampler
 import io.github.t3r1jj.ips.research.model.collector.SensorDelay
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
+import io.github.t3r1jj.ips.research.view.I18nArrayAdapter
 import io.github.t3r1jj.ips.research.view.RealtimeChart
 import io.github.t3r1jj.ips.research.view.RenderableView
-import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
-import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 
 
 class InertialActivity : AppCompatActivity() {
-    var movementType = InertialDataset.InertialMovementType.WALKING
+
     var submitted = false
     var stepsCount = 20
     var displacement = 0f
+    lateinit var movementType: InertialDataset.InertialMovementType
     lateinit var sampler: InertialSampler
     lateinit var accelerationChart: LineChart
     lateinit var accelerationMagnitudeChart: LineChart
@@ -49,31 +44,32 @@ class InertialActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val movementAdapter = I18nArrayAdapter(this, InertialDataset.InertialMovementType.values())
+        val delayAdapter = I18nArrayAdapter(this, SensorDelay.values())
+        movementType = movementAdapter.getItem(0)
         chartRenderer = RealtimeChartRenderer(this)
         sampler = InertialSampler(this)
         accelerationChart = chartRenderer.createChart(-15f, 15f)
-        accelerationChart.description.text = "Acceleration (m/s^2 to s)"
+        accelerationChart.description.text = getString(R.string.acceleration_label)
         accelerationMagnitudeChart = chartRenderer.createChart(0f, 30f)
-        accelerationMagnitudeChart.description.text = "Acceleration magnitude (m/s^2 to s)"
-        val movementAdapter: Adapter = ArrayAdapter<InertialDataset.InertialMovementType>(this,
-                R.layout.simple_spinner_item, InertialDataset.InertialMovementType.values().toMutableList())
-        val delayAdapter: Adapter = ArrayAdapter<SensorDelay>(this, R.layout.simple_spinner_item, SensorDelay.values().toMutableList())
+        accelerationMagnitudeChart.description.text = getString(R.string.acceleration_magnitude_label)
         setContentView(object : RenderableView(this) {
             override fun view() {
 
                 linearLayout {
+                    padding(dip(8))
                     size(MATCH, MATCH)
-                    DSL.orientation(VERTICAL)
+                    orientation(VERTICAL)
                     textView {
-                        DSL.text("Data collected:")
-                        DSL.gravity(CENTER_HORIZONTAL)
+                        text(R.string.collected_data)
+                        gravity(CENTER_HORIZONTAL)
                         typeface(null, Typeface.BOLD)
                     }
                     linearLayout {
                         size(MATCH, WRAP)
-                        DSL.orientation(HORIZONTAL)
+                        orientation(HORIZONTAL)
                         textView {
-                            text("Movement type:")
+                            text(R.string.movement_type)
                             size(WRAP, WRAP)
                         }
                         spinner {
@@ -87,9 +83,9 @@ class InertialActivity : AppCompatActivity() {
                     }
                     linearLayout {
                         size(MATCH, WRAP)
-                        DSL.orientation(HORIZONTAL)
+                        orientation(HORIZONTAL)
                         textView {
-                            text("Steps:")
+                            text(R.string.steps)
                             size(WRAP, WRAP)
                         }
                         editText {
@@ -106,7 +102,7 @@ class InertialActivity : AppCompatActivity() {
                             }
                         }
                         textView {
-                            text("Displacement [m]:")
+                            text(R.string.displacement)
                             size(WRAP, WRAP)
                         }
                         editText {
@@ -125,9 +121,9 @@ class InertialActivity : AppCompatActivity() {
                     }
                     linearLayout {
                         size(MATCH, WRAP)
-                        DSL.orientation(HORIZONTAL)
+                        orientation(HORIZONTAL)
                         textView {
-                            text("Sensor delay:")
+                            text(R.string.sensor_delay)
                             size(WRAP, WRAP)
                         }
                         spinner {
@@ -145,7 +141,7 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         button {
                             size(0, WRAP)
-                            text("Sample")
+                            text(R.string.sample)
                             onClick {
                                 stopSampling()
                                 chartRenderer.clearChart(accelerationChart)
@@ -158,7 +154,7 @@ class InertialActivity : AppCompatActivity() {
                         }
                         button {
                             size(0, WRAP)
-                            text("Stop")
+                            text(R.string.stop)
                             onClick {
                                 stopSampling()
                             }
@@ -171,7 +167,7 @@ class InertialActivity : AppCompatActivity() {
                         size(MATCH, 0)
                         orientation(VERTICAL)
                         textView {
-                            text("Real time data:")
+                            text(R.string.real_time_data)
                             size(WRAP, WRAP)
                         }
                         linearLayout {
@@ -196,7 +192,7 @@ class InertialActivity : AppCompatActivity() {
 
                     button {
                         size(MATCH, WRAP)
-                        text("Submit")
+                        text(R.string.submit)
                         onClick {
                             val data = InertialDataset(movementType, sampler.acceleration)
                             data.sensorDelay = sampler.delay

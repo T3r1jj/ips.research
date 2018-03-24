@@ -30,10 +30,7 @@ import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import io.github.t3r1jj.ips.research.model.test.PedometerTester
 import io.github.t3r1jj.ips.research.model.test.WekaPreTester
-import io.github.t3r1jj.ips.research.view.ArffDialog
-import io.github.t3r1jj.ips.research.view.PedometerBottomSheetDialog
-import io.github.t3r1jj.ips.research.view.PedometerDialog
-import io.github.t3r1jj.ips.research.view.RenderableView
+import io.github.t3r1jj.ips.research.view.*
 import trikita.anvil.Anvil
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
@@ -68,6 +65,7 @@ class DatabaseActivity : AppCompatActivity() {
             override fun view() {
 
                 linearLayout {
+                    padding(dip(8))
                     size(MATCH, MATCH)
                     orientation(VERTICAL)
                     listView {
@@ -80,37 +78,37 @@ class DatabaseActivity : AppCompatActivity() {
                         orientation(HORIZONTAL)
                         button {
                             size(0, WRAP)
-                            text("Load")
+                            text(R.string.load)
                             onClick {
                                 AlertDialog.Builder(this@DatabaseActivity)
-                                        .setMessage("From where to load the data?")
-                                        .setPositiveButton("Device", { _, which ->
+                                        .setMessage(R.string.from_where_to_load)
+                                        .setPositiveButton(R.string.device, { _, which ->
                                             if (which == DialogInterface.BUTTON_POSITIVE) {
                                                 showFileChooser()
                                             }
-                                        }).setNegativeButton("Remote database", { _, which ->
-                                    if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                        loadFromRemote()
-                                    }
-                                }).show()
+                                        }).setNegativeButton(R.string.remote_db, { _, which ->
+                                            if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                                loadFromRemote()
+                                            }
+                                        }).show()
                             }
                             weight(0.5f)
                         }
                         button {
                             size(0, WRAP)
-                            text("Save")
+                            text(R.string.save)
                             onClick {
                                 AlertDialog.Builder(this@DatabaseActivity)
-                                        .setMessage("Where to save the data?")
-                                        .setPositiveButton("Device", { _, which ->
+                                        .setMessage(R.string.where_to_save)
+                                        .setPositiveButton(R.string.device, { _, which ->
                                             if (which == DialogInterface.BUTTON_POSITIVE) {
                                                 saveDataToDevice()
                                             }
-                                        }).setNegativeButton("Remote database", { _, which ->
-                                    if (which == DialogInterface.BUTTON_NEGATIVE) {
-                                        saveDataToRemote()
-                                    }
-                                }).show()
+                                        }).setNegativeButton(R.string.remote_db, { _, which ->
+                                            if (which == DialogInterface.BUTTON_NEGATIVE) {
+                                                saveDataToRemote()
+                                            }
+                                        }).show()
 
                             }
                             weight(0.5f)
@@ -118,18 +116,18 @@ class DatabaseActivity : AppCompatActivity() {
                     }
                     button {
                         size(MATCH, WRAP)
-                        text("Clear")
+                        text(R.string.clear)
                         onClick {
                             AlertDialog.Builder(this@DatabaseActivity)
-                                    .setMessage("Do you want to delete all of the records from the db?")
-                                    .setPositiveButton("Yes", { _, which ->
+                                    .setMessage(R.string.delete_all_confirmation)
+                                    .setPositiveButton(R.string.yes, { _, which ->
                                         if (which == DialogInterface.BUTTON_POSITIVE) {
                                             dao.clear()
                                             recreateAdapter()
                                             Anvil.render()
                                         }
-                                    }).setNegativeButton("No", { _, _ ->
-                            }).show()
+                                    }).setNegativeButton(R.string.no, { _, _ ->
+                                    }).show()
                         }
                     }
 
@@ -139,23 +137,29 @@ class DatabaseActivity : AppCompatActivity() {
                         orientation(HORIZONTAL)
                         button {
                             size(0, WRAP)
-                            text("WiFi to ARFF")
+                            text(R.string.wifi_to_arff)
                             onClick {
                                 if (!isExternalStorageWritable()) {
-                                    Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
-                                } else if (dao.findAll().isEmpty()) {
-                                    Toast.makeText(this@DatabaseActivity, "No data collected", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@DatabaseActivity,
+                                            R.string.external_storage_not_available,
+                                            Toast.LENGTH_LONG).show()
+                                } else if (wifiData().isEmpty()) {
+                                    Toast.makeText(this@DatabaseActivity,
+                                            R.string.no_data_collected,
+                                            Toast.LENGTH_LONG).show()
                                 } else {
-                                    userInputDialog = AlertDialog.Builder(context).setView(ArffDialog(this@DatabaseActivity, this@DatabaseActivity)).show()
+                                    userInputDialog = AlertDialog.Builder(context).setView(ArffDialog(
+                                            this@DatabaseActivity, this@DatabaseActivity)).show()
                                 }
                             }
                             weight(0.5f)
                         }
                         button {
                             size(0, WRAP)
-                            text("Pedometer test")
+                            text(R.string.pedometer_test)
                             onClick {
-                                userInputDialog = AlertDialog.Builder(context).setView(PedometerDialog(this@DatabaseActivity, this@DatabaseActivity)).show()
+                                userInputDialog = AlertDialog.Builder(context).setView(PedometerDialog(
+                                        this@DatabaseActivity, this@DatabaseActivity)).show()
                             }
                             weight(0.5f)
                         }
@@ -165,7 +169,8 @@ class DatabaseActivity : AppCompatActivity() {
 
             override fun onAttachedToWindow() {
                 super.onAttachedToWindow()
-                Toast.makeText(this@DatabaseActivity, "Long press on record for single removal", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@DatabaseActivity,
+                        R.string.single_removal_description, Toast.LENGTH_SHORT).show()
             }
         })
 
@@ -190,7 +195,7 @@ class DatabaseActivity : AppCompatActivity() {
             linearLayout {
                 padding(dip(20))
                 textView {
-                    text(item.second.toString())
+                    text(item.second.toString(this))
                     onLongClick {
                         openRemovalDialog(item)
                         true
@@ -208,20 +213,20 @@ class DatabaseActivity : AppCompatActivity() {
         checkIfDbReachable()
         try {
             val pull = dao.pull()
-            loadingCheckThread = createAndStartCheckThread(loadingCheckThread, pull, "Loading finished")
+            loadingCheckThread = createAndStartCheckThread(loadingCheckThread, pull, getString(R.string.loading_finished))
         } catch (ex: RuntimeException) {
-            Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@DatabaseActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, ex), Toast.LENGTH_LONG).show()
         }
     }
 
     private fun saveDataToRemote() {
-        Toast.makeText(this@DatabaseActivity, "Started replication in the background", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this@DatabaseActivity, R.string.replication_started, Toast.LENGTH_SHORT).show()
         checkIfDbReachable()
         try {
             val push = dao.push()
-            uploadingCheckThread = createAndStartCheckThread(uploadingCheckThread, push, "Uploading finished")
+            uploadingCheckThread = createAndStartCheckThread(uploadingCheckThread, push, getString(R.string.uploading_finished))
         } catch (ex: RuntimeException) {
-            Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@DatabaseActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, ex), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -251,30 +256,33 @@ class DatabaseActivity : AppCompatActivity() {
 
     private fun saveDataToDevice() {
         if (!isExternalStorageWritable()) {
-            Toast.makeText(this@DatabaseActivity, "External storage not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@DatabaseActivity, R.string.external_storage_not_available,
+                    Toast.LENGTH_LONG).show()
         } else {
             val fileName = "ips.data." + Date().time.toString() + ".json"
             val file = getPublicDownloadStorageFile(fileName)
             try {
                 ObjectMapper().writeValue(file.outputStream(), dao.findAll().values)
-                Toast.makeText(this@DatabaseActivity, "Saved json file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+                Toast.makeText(this@DatabaseActivity, getString(R.string.saved_json_file_to) + file.absolutePath,
+                        Toast.LENGTH_LONG).show()
             } catch (ex: RuntimeException) {
-                Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+                Toast.makeText(this@DatabaseActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, ex),
+                        Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun openRemovalDialog(item: Pair<String, Dataset>) {
         AlertDialog.Builder(this)
-                .setMessage("Do you want to delete record: " + item.second.toString() + "?")
-                .setPositiveButton("Yes", { _, which ->
+                .setMessage(getString(R.string.do_you_want_to_delete) + item.second.toString() + "?")
+                .setPositiveButton(R.string.yes, { _, which ->
                     if (which == DialogInterface.BUTTON_POSITIVE) {
                         dao.delete(item.first)
                         recreateAdapter()
                         Anvil.render()
                     }
-                }).setNegativeButton("No", { _, _ ->
-        }).show()
+                }).setNegativeButton(R.string.no, { _, _ ->
+                }).show()
     }
 
     private fun isExternalStorageWritable(): Boolean {
@@ -302,7 +310,7 @@ class DatabaseActivity : AppCompatActivity() {
         Thread({
             if (activeNetworkInfo == null || !activeNetworkInfo.isConnected || Runtime.getRuntime().exec(command).waitFor() != 0) {
                 runOnUiThread {
-                    Toast.makeText(this@DatabaseActivity, "Error: Remote DB is not reachable, check internet connection > try again; if fails > notify app author", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@DatabaseActivity, R.string.error_remote_db_not_reachable, Toast.LENGTH_LONG).show()
                 }
             }
         }).start()
@@ -317,7 +325,9 @@ class DatabaseActivity : AppCompatActivity() {
         properties.offset = File(DialogConfigs.DEFAULT_DIR)
         properties.extensions = null
         filePickerDialog = FilePickerDialog(this, properties)
-        filePickerDialog!!.setTitle("Select a IPS json data file")
+        filePickerDialog!!.setPositiveBtnName(getString(R.string.select))
+        filePickerDialog!!.setNegativeBtnName(getString(R.string.cancel))
+        filePickerDialog!!.setTitle(R.string.select_json)
         filePickerDialog!!.setDialogSelectionListener {
             dao.saveAll(File(it[0]))
             recreateAdapter()
@@ -330,9 +340,9 @@ class DatabaseActivity : AppCompatActivity() {
         when (requestCode) {
             EXTERNAL_PERMISSION_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(this@DatabaseActivity, "Please repeat the last action", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@DatabaseActivity, R.string.repeat_last, Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(this@DatabaseActivity, "Please grant the permission to use external storage in order to save the data to json file", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@DatabaseActivity, R.string.grant_permissions, Toast.LENGTH_LONG).show()
                 }
                 return
             }
@@ -355,34 +365,34 @@ class DatabaseActivity : AppCompatActivity() {
 
     fun onPedometerDebugClick() {
         if (!isExternalStorageWritable()) {
-            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.external_storage_not_available, Toast.LENGTH_LONG).show()
         } else {
             val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".sce"
             val file = getPublicDownloadStorageFile(fileName)
             tester.generateDebug(inertialData(), file.outputStream())
-            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 
     fun onPedometerOutputClick() {
         if (!isExternalStorageWritable()) {
-            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.external_storage_not_available, Toast.LENGTH_LONG).show()
         } else {
             val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
             tester.saveOutput(file.outputStream())
-            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 
     fun onPedometerInfoClick() {
         if (!isExternalStorageWritable()) {
-            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.external_storage_not_available, Toast.LENGTH_LONG).show()
         } else {
             val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
             tester.saveOutputInfo(file.outputStream())
-            Toast.makeText(this, "Saved file to: " + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -396,6 +406,7 @@ class DatabaseActivity : AppCompatActivity() {
 
     internal fun generateArff(regex: String, opts: ArffTransform.Options, trainData: List<WifiDataset>) {
         val aff = ArffTransform(Regex(regex, RegexOption.IGNORE_CASE), opts)
+        aff.i18n.loadI18n(this)
         val wifiData = wifiData()
         val testData = wifiData.filter { superIt -> trainData.firstOrNull { it.timestamp == superIt.timestamp } == null }
         aff.apply(trainData, testData)
@@ -413,9 +424,11 @@ class DatabaseActivity : AppCompatActivity() {
             file = getPublicDownloadStorageFile(fileName)
             aff.writeToFile(file.outputStream(), aff.trainDevices)
             filePaths.add(file.absolutePath)
-            Toast.makeText(this@DatabaseActivity, "Generated ARFF files to: " + filePaths.joinToString("\n", "\n"), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@DatabaseActivity, getString(R.string.generated_arff_files_to) +
+                    filePaths.joinToString("\n", "\n"), Toast.LENGTH_LONG).show()
         } catch (ex: Exception) {
-            Toast.makeText(this@DatabaseActivity, "Error: " + ex.toString(), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@DatabaseActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, ex),
+                    Toast.LENGTH_LONG).show()
         }
     }
 
@@ -425,8 +438,8 @@ class DatabaseActivity : AppCompatActivity() {
         val testData = wifiData.filter { superIt -> trainData.firstOrNull { it.timestamp == superIt.timestamp } == null }
         aff.apply(trainData, testData)
         val tester = WekaPreTester(aff)
-        val text = "Weka pre test accuracy:\n" + tester.knnTest().joinToString("%\n\t", "kNN:\n\t", "%\n") +
-                tester.customTest().joinToString("%\n\t", "Custom:\n\t", "%\n\n")
+        val text = getString(R.string.weka_pretest_acc) + ":\n" + tester.knnTest().joinToString("%\n\t", "kNN:\n\t", "%\n") +
+                tester.customTest().joinToString("%\n\t", getString(R.string.custom) + ":\n\t", "%\n\n")
         val bottomSheet = BottomSheetDialog(this)
         outputDialog = bottomSheet
         bottomSheet.setContentView(PedometerBottomSheetDialog(this, this, text, false))

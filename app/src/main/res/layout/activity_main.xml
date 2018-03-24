@@ -35,7 +35,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Inertial"
+                    android:text="@string/inertial"
                     android:textSize="18sp" />
 
                 <RelativeLayout
@@ -48,7 +48,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Magnetic"
+                    android:text="@string/magnetic"
                     android:textSize="18sp" />
 
                 <RelativeLayout
@@ -61,7 +61,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="WiFi"
+                    android:text="@string/wifi"
                     android:textSize="18sp" />
 
                 <RelativeLayout
@@ -74,7 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Collected data"
+                    android:text="@string/collected_data"
                     android:textSize="18sp" />
 
                 <RelativeLayout
@@ -87,7 +87,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dip"
                     android:layout_weight="0.1"
-                    android:text="Test model online"
+                    android:text="@string/test_model_online"
                     android:textSize="18sp" />
 
                 <RelativeLayout

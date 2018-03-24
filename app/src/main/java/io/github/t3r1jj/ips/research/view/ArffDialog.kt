@@ -6,10 +6,9 @@ import android.widget.ArrayAdapter
 import android.widget.CompoundButton
 import android.widget.LinearLayout
 import io.github.t3r1jj.ips.research.DatabaseActivity
+import io.github.t3r1jj.ips.research.R
 import io.github.t3r1jj.ips.research.model.algorithm.ArffTransform
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
-import trikita.anvil.BaseDSL
-import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -36,11 +35,9 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
     private val dataTypeAdapter = ArrayAdapter<ArffTransform.AttributeDataType>(context,
             io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
             ArffTransform.AttributeDataType.values())
-    private val trainAdapter = ArrayAdapter<ArffTransform.Processing>(context,
-            io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
+    private val trainAdapter = I18nArrayAdapter(context,
             ArffTransform.Processing.values())
-    private val testAdapter = ArrayAdapter<ArffTransform.Processing>(context,
-            io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
+    private val testAdapter = I18nArrayAdapter(context,
             ArffTransform.Processing.values())
     private val firstRegex = "(eduroam)"
     private val secondRegex = "(eduroam|dziekanat|pb-guest|.*hotspot.*)"
@@ -55,7 +52,7 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
 
     private fun initGroups(): Map<String, List<WifiDataset>> {
         val groups = arffActivity.wifiData()
-                .groupBy { "ALL " + it.device }
+                .groupBy { "(*) " + it.device }
                 .toSortedMap()
                 .plus(arffActivity.wifiData().groupBy {
                     dateFormatter.format(it.timestamp) + " " + it.device
@@ -74,53 +71,53 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
     override fun view() {
         linearLayout {
             padding(dip(8))
-            size(BaseDSL.MATCH, BaseDSL.MATCH)
-            DSL.orientation(LinearLayout.VERTICAL)
+            size(MATCH, MATCH)
+            orientation(LinearLayout.VERTICAL)
             textView {
                 padding(dip(8))
-                size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.text("Transform WiFi data into ARFF for Weka manual research")
+                size(MATCH, WRAP)
+                text(R.string.transform_arff_description)
             }
             textView {
                 padding(dip(8))
-                size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.text("SSID regex:")
+                size(MATCH, WRAP)
+                text(R.string.ssid_regex)
             }
             radioGroup {
                 radioButton {
                     padding(dip(8))
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text(firstRegex)
-                    DSL.checked(isFirstSwitchOn)
+                    size(WRAP, WRAP)
+                    text(firstRegex)
+                    checked(isFirstSwitchOn)
                     onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isFirstSwitchOn = b
                     }
                 }
                 radioButton {
                     padding(dip(8))
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text(secondRegex)
-                    DSL.checked(isSecondSwitchOn)
+                    size(WRAP, WRAP)
+                    text(secondRegex)
+                    checked(isSecondSwitchOn)
                     onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isSecondSwitchOn = b
                     }
                 }
                 radioButton {
                     padding(dip(8))
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Custom (Java regex, fill in below):")
-                    DSL.checked(isThirdSwitchOn)
+                    size(WRAP, WRAP)
+                    text(R.string.custom_regex)
+                    checked(isThirdSwitchOn)
                     onCheckedChange { _: CompoundButton?, b: Boolean ->
                         isThirdSwitchOn = b
                     }
                 }
                 linearLayout {
-                    BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.orientation(LinearLayout.HORIZONTAL)
+                    size(MATCH, WRAP)
+                    orientation(LinearLayout.HORIZONTAL)
                     editText {
                         padding(dip(8))
-                        size(0, BaseDSL.WRAP)
-                        BaseDSL.weight(1f)
+                        size(0, WRAP)
+                        weight(1f)
                         onTextChanged {
                             customRegex = it.toString()
                         }
@@ -129,45 +126,47 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
             }
             linearLayout {
                 padding(dip(8))
-                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
+                size(MATCH, WRAP)
+                orientation(LinearLayout.HORIZONTAL)
                 textView {
-                    size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.text("Training dataset group (remaining will be tested):")
+                    size(MATCH, WRAP)
+                    text(R.string.training_selection_description)
                 }
             }
             spinner {
-                size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.adapter(groupAdapter)
+                size(MATCH, WRAP)
+                adapter(groupAdapter)
                 onItemSelected { a, _, _, _ ->
                     group = a.selectedItem.toString()
                 }
             }
             linearLayout {
-                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
+                padding(dip(8), 0, 0, 0)
+                size(MATCH, WRAP)
+                orientation(LinearLayout.HORIZONTAL)
                 textView {
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Attributes:")
+                    size(WRAP, WRAP)
+                    text(R.string.attributes)
                 }
 
                 spinner {
-                    size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.adapter(dataTypeAdapter)
+                    size(MATCH, WRAP)
+                    adapter(dataTypeAdapter)
                     onItemSelected { a, _, _, _ ->
                         opts.attributeDataType = a.selectedItem as ArffTransform.AttributeDataType
                     }
                 }
             }
             linearLayout {
-                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
+                padding(dip(8), 0, 0, 0)
+                size(MATCH, WRAP)
+                orientation(LinearLayout.HORIZONTAL)
                 textView {
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Train processing:")
+                    size(WRAP, WRAP)
+                    text(R.string.train_processing)
                 }
                 spinner {
-                    size(BaseDSL.MATCH, BaseDSL.WRAP)
+                    size(MATCH, WRAP)
                     adapter(trainAdapter)
                     onItemSelected { a, _, _, _ ->
                         opts.trainProcessing = a.selectedItem as ArffTransform.Processing
@@ -175,14 +174,15 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
                 }
             }
             linearLayout {
-                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
+                padding(dip(8), 0, 0, dip(8))
+                size(MATCH, WRAP)
+                orientation(LinearLayout.HORIZONTAL)
                 textView {
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Test processing:")
+                    size(WRAP, WRAP)
+                    text(R.string.test_processing)
                 }
                 spinner {
-                    size(BaseDSL.MATCH, BaseDSL.WRAP)
+                    size(MATCH, WRAP)
                     adapter(testAdapter)
                     onItemSelected { a, _, _, _ ->
                         opts.testProcessing = a.selectedItem as ArffTransform.Processing
@@ -190,11 +190,11 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
                 }
             }
             linearLayout {
-                BaseDSL.size(BaseDSL.MATCH, BaseDSL.WRAP)
-                DSL.orientation(LinearLayout.HORIZONTAL)
+                size(MATCH, WRAP)
+                orientation(LinearLayout.HORIZONTAL)
                 button {
-                    size(0, BaseDSL.WRAP)
-                    DSL.text("Generate")
+                    size(0, WRAP)
+                    text(R.string.generate)
                     onClick {
                         val regex = when {
                             isFirstSwitchOn -> firstRegex
@@ -203,12 +203,12 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
                         }
                         arffActivity.generateArff(regex, opts, groups[group]!!)
                     }
-                    BaseDSL.weight(1f)
+                    weight(1f)
                 }
 
                 button {
-                    size(BaseDSL.WRAP, BaseDSL.WRAP)
-                    DSL.text("Test")
+                    size(WRAP, WRAP)
+                    text(R.string.test)
                     onClick {
                         val regex = when {
                             isFirstSwitchOn -> firstRegex
@@ -220,12 +220,12 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
                 }
 
                 button {
-                    size(0, BaseDSL.WRAP)
-                    DSL.text("Cancel")
+                    size(0, WRAP)
+                    text(R.string.cancel)
                     onClick {
                         arffActivity.userInputDialog?.dismiss()
                     }
-                    BaseDSL.weight(1f)
+                    weight(1f)
                 }
             }
         }

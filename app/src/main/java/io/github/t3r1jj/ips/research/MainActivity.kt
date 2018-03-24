@@ -19,10 +19,7 @@ class MainActivity : AppCompatActivity() {
                 InfoView.Model("MPAndroidChart", "Philipp Jahoda", "Apache 2.0"),
                 InfoView.Model("android-filepicker", "Angad Singh", "Apache 2.0"),
                 InfoView.Model("couchbase-lite-android", "Couchbase", "Apache 2.0"),
-                InfoView.Model("couchbase-lite-android", "Couchbase", "Apache 2.0"),
-                InfoView.Model("Android + Kotlin"),
-                InfoView.Model("Tested with JUnit + Mockito + Espresso"),
-                InfoView.Model("Generated test cases can be reviewed in Weka (.arff) or Scilab (.sci)")
+                InfoView.Model("couchbase-lite-android", "Couchbase", "Apache 2.0")
         )
     }
 

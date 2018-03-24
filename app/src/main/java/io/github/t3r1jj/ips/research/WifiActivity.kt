@@ -8,15 +8,14 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Toast
 import io.github.t3r1jj.ips.research.model.Dao
-import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import io.github.t3r1jj.ips.research.model.collector.WifiSampler
+import io.github.t3r1jj.ips.research.model.data.WifiDataset
+import io.github.t3r1jj.ips.research.view.I18nUtils
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
-import trikita.anvil.DSL
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
-
 
 class WifiActivity : AppCompatActivity() {
 
@@ -28,7 +27,9 @@ class WifiActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         sampler = WifiSampler(this)
-        spinnerAdapter = ArrayAdapter<SamplingRate>(this, android.R.layout.simple_spinner_item, SamplingRate.values().toMutableList())
+        spinnerAdapter = ArrayAdapter<SamplingRate>(this,
+                io.github.t3r1jj.ips.research.R.layout.support_simple_spinner_dropdown_item,
+                SamplingRate.values())
         setContentView(object : RenderableView(this) {
             override fun view() {
 
@@ -41,7 +42,7 @@ class WifiActivity : AppCompatActivity() {
                         orientation(LinearLayout.HORIZONTAL)
                         textView {
                             size(WRAP, WRAP)
-                            text("Place name: ")
+                            text(R.string.place_name)
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -58,7 +59,7 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
-                            text("Number of iterations: ")
+                            text(R.string.number_of_scans)
                         }
                         editText {
                             size(MATCH, WRAP)
@@ -78,7 +79,7 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         textView {
                             size(WRAP, WRAP)
-                            text("Sampling rate: ")
+                            text(R.string.sampling_rate)
                         }
                         spinner {
                             size(MATCH, WRAP)
@@ -95,13 +96,15 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         button {
                             size(0, WRAP)
-                            text("Sample")
+                            text(R.string.sample)
                             onClick {
                                 submitted = false
                                 try {
                                     sampler.startSampling()
                                 } catch (ex: RuntimeException) {
-                                    Toast.makeText(this@WifiActivity, ex.toString(), Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this@WifiActivity,
+                                            I18nUtils.tryI18nException(this@WifiActivity, ex),
+                                            Toast.LENGTH_LONG).show()
                                 }
                             }
                             weight(0.5f)
@@ -109,7 +112,7 @@ class WifiActivity : AppCompatActivity() {
                         }
                         button {
                             size(0, WRAP)
-                            text("Stop")
+                            text(R.string.stop)
                             onClick {
                                 sampler.stopSampling()
                             }
@@ -123,9 +126,9 @@ class WifiActivity : AppCompatActivity() {
                         size(MATCH, 0)
                         weight(1f)
                         adapter(RenderableAdapter.withItems(sampler.fingerprints, { _, item ->
-                            DSL.linearLayout {
-                                DSL.textView {
-                                    DSL.text(item.toString())
+                            linearLayout {
+                                textView {
+                                    text(item.toString())
                                 }
                             }
                         }))
@@ -133,10 +136,10 @@ class WifiActivity : AppCompatActivity() {
 
                     button {
                         size(MATCH, WRAP)
-                        text("Submit")
+                        text(R.string.submit)
                         onClick {
                             if (place.isBlank()) {
-                                Toast.makeText(this@WifiActivity, "Please provide a place name for classification", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@WifiActivity, R.string.place_name_required, Toast.LENGTH_LONG).show()
                             } else {
                                 val data = WifiDataset(place, sampler.fingerprints)
                                 data.iterations = sampler.sampleIndex

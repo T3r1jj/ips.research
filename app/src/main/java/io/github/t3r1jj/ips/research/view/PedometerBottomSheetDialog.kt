@@ -6,8 +6,7 @@ import android.support.v4.widget.NestedScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import io.github.t3r1jj.ips.research.DatabaseActivity
-import trikita.anvil.BaseDSL
-import trikita.anvil.DSL
+import io.github.t3r1jj.ips.research.R
 import trikita.anvil.DSL.*
 
 @SuppressLint("ViewConstructor")
@@ -20,32 +19,33 @@ class PedometerBottomSheetDialog(context: Context, private val text: String, pri
 
     override fun view() {
         linearLayout {
-            size(BaseDSL.MATCH, BaseDSL.WRAP)
-            DSL.orientation(LinearLayout.VERTICAL)
+            padding(dip(6))
+            size(MATCH, WRAP)
+            orientation(LinearLayout.VERTICAL)
             if (withButtons) {
                 linearLayout {
-                    size(BaseDSL.MATCH, BaseDSL.WRAP)
-                    DSL.orientation(LinearLayout.HORIZONTAL)
+                    size(MATCH, WRAP)
+                    orientation(LinearLayout.HORIZONTAL)
                     button {
-                        size(0, BaseDSL.WRAP)
+                        size(0, WRAP)
                         weight(1f)
-                        DSL.text("Info to file")
+                        text(R.string.info_to_file)
                         onClick {
                             pedometer.onPedometerInfoClick()
                         }
                     }
                     button {
-                        size(0, BaseDSL.WRAP)
+                        size(0, WRAP)
                         weight(1f)
-                        DSL.text("Output to file")
+                        text(R.string.output_to_file)
                         onClick {
                             pedometer.onPedometerOutputClick()
                         }
                     }
                     button {
-                        size(0, BaseDSL.WRAP)
+                        size(0, WRAP)
                         weight(1f)
-                        DSL.text("Debug to file")
+                        text(R.string.debug_to_file)
                         onClick {
                             pedometer.onPedometerDebugClick()
                         }

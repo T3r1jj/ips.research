@@ -13,13 +13,5 @@ class FilterFactory(var filterType: FilterType) {
 
     enum class FilterType {
         NO_FILTER, MOVING_AVERAGE_FILTER, KALMAN_FILTER;
-
-        fun toStringPL(): String {
-            return when (this) {
-                FilterType.NO_FILTER -> "brak"
-                FilterType.MOVING_AVERAGE_FILTER -> "średnia ruchoma"
-                FilterType.KALMAN_FILTER -> "Kalman"
-            }
-        }
     }
 }
