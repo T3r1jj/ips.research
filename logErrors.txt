@@ -1,1 +1,0 @@
-bash: ./gradle: Is a directory
