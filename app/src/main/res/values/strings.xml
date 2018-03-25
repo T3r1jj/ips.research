@@ -117,7 +117,7 @@
     <string name="test_cases_plots">Test cases (x5 plots)</string>
     <string name="filter">filter</string>
     <string name="step_count">step count</string>
-    <string name="magn">magn</string>
+    <string name="magn">mod</string>
     <string name="pedometer_test_info">Pedometer test info output</string>
     <string name="devices">Devices</string>
     <string name="all_devices">ALL DEVICES</string>

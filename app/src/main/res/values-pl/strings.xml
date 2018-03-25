@@ -118,7 +118,7 @@
     <string name="test_cases_plots">Przypadki testowe (x5 wykresów)</string>
     <string name="filter">filtr</string>
     <string name="step_count">liczba kroków</string>
-    <string name="magn">magn</string>
+    <string name="magn">mod</string>
     <string name="pedometer_test_info">Wyjście informacji testu krokomierza</string>
     <string name="devices">Urządzenia</string>
     <string name="all_devices">(*)</string>

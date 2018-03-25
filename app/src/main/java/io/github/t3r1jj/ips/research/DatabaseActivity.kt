@@ -369,7 +369,7 @@ class DatabaseActivity : AppCompatActivity() {
         } else {
             val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".sce"
             val file = getPublicDownloadStorageFile(fileName)
-            tester.generateDebug(inertialData(), file.outputStream())
+            tester.generateDebug(inertialData(), file.outputStream(), this)
             Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
@@ -380,7 +380,7 @@ class DatabaseActivity : AppCompatActivity() {
         } else {
             val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
-            tester.saveOutput(file.outputStream())
+            tester.saveOutput(file.outputStream(), this)
             Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }

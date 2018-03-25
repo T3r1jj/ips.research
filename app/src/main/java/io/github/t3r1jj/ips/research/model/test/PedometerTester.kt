@@ -4,6 +4,7 @@ import android.content.Context
 import io.github.t3r1jj.ips.research.R
 import io.github.t3r1jj.ips.research.model.algorithm.Pedometer
 import io.github.t3r1jj.ips.research.model.algorithm.filter.FilterFactory
+import io.github.t3r1jj.ips.research.model.collector.SensorDelay
 import io.github.t3r1jj.ips.research.model.data.Dataset
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import java.io.BufferedWriter
@@ -28,11 +29,11 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         var pedometerTestDebug = "Pedometer test debug (paste into Scilab)"
         var testCasesPlots = "Test cases (x5 plots)"
         var device = "Device"
-        var filter = "filtr"
-        var movement = "ruch"
-        var stepCount = "liczba kroków"
+        var filter = "filter"
+        var movement = "movement type"
+        var stepCount = "step count"
         var magn = "magn"
-        var threshold = "próg"
+        var threshold = "threshold"
         var sensitivity = "czułość"
         var pedometerTestInfoOutput = "Pedometer test info output"
         var devices = "Devices"
@@ -44,50 +45,59 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         var stepsPositiveDifference = "steps positive difference"
         var stepsNegativeDifference = "steps negative difference"
         var totalTime = "total time"
-        var filterTypes = mapOf(FilterFactory.FilterType.NO_FILTER to "brak filtra",
-                FilterFactory.FilterType.MOVING_AVERAGE_FILTER to "średnia ruchoma",
-                FilterFactory.FilterType.KALMAN_FILTER to "Kalmana"
+        var samplingRate = "sampling rate"
+        var filterTypes = mapOf(FilterFactory.FilterType.NO_FILTER to "NO_FILTER",
+                FilterFactory.FilterType.MOVING_AVERAGE_FILTER to "MOVING_AVERAGE",
+                FilterFactory.FilterType.KALMAN_FILTER to "KALMAN"
         )
         var movementTypes = mapOf(
-                InertialDataset.InertialMovementType.WALKING to "chodzenie",
-                InertialDataset.InertialMovementType.RUNNING to "bieganie",
-                InertialDataset.InertialMovementType.STAIRS_UP to "wchodzenie po schodach",
-                InertialDataset.InertialMovementType.STAIRS_DOWN to "schodzenie po schodach",
-                InertialDataset.InertialMovementType.ELEVATOR_UP to "windą w górę",
-                InertialDataset.InertialMovementType.ELEVATOR_DOWN to "windą w dół",
-                InertialDataset.InertialMovementType.NONE to "w miejscu"
+                InertialDataset.InertialMovementType.WALKING to "WALKING",
+                InertialDataset.InertialMovementType.RUNNING to "RUNNING",
+                InertialDataset.InertialMovementType.STAIRS_UP to "STAIRS UP",
+                InertialDataset.InertialMovementType.STAIRS_DOWN to "STAIRS DOWN",
+                InertialDataset.InertialMovementType.ELEVATOR_UP to "ELEVEATOR UP",
+                InertialDataset.InertialMovementType.ELEVATOR_DOWN to "ELEVATOR DOWN",
+                InertialDataset.InertialMovementType.NONE to "NONE"
+        )
+        var sensorDelays = mapOf(
+                SensorDelay.FASTEST to "FASTEST",
+                SensorDelay.NORMAL to "NORMAL"
         )
 
         fun loadI18n(context: Context) {
-            this.pedometerTestOutput = i18n(R.string.pedometer_test_output, context)
-            this.testDate = i18n(R.string.test_date, context)
-            this.algorithm = i18n(R.string.algorithm, context)
-            this.numberOfTestCases = i18n(R.string.number_of_test_cases, context)
-            this.expected = i18n(R.string.expected, context)
-            this.detected = i18n(R.string.detected, context)
-            this.pedometerTestDebug = i18n(R.string.pedometer_test_debug, context)
-            this.testCasesPlots = i18n(R.string.test_cases_plots, context)
-            this.device = i18n(R.string.device, context)
-            this.filter = i18n(R.string.filter, context)
-            this.movement = i18n(R.string.movement_type, context).toLowerCase()
-            this.stepCount = i18n(R.string.step_count, context)
-            this.magn = i18n(R.string.magn, context)
-            this.threshold = i18n(R.string.threshold, context).toLowerCase()
-            this.sensitivity = i18n(R.string.sensitivity, context).toLowerCase()
-            this.pedometerTestInfoOutput = i18n(R.string.pedometer_test_info, context)
-            this.devices = i18n(R.string.devices, context)
-            this.allDevices = i18n(R.string.all_devices, context)
-            this.error = i18n(R.string.error_model, context)
-            this.steps = i18n(R.string.steps_model, context)
-            this.detectedSteps = i18n(R.string.detected_steps, context)
-            this.stepsDifference = i18n(R.string.steps_difference, context)
-            this.stepsPositiveDifference = i18n(R.string.steps_positive_difference, context)
-            this.stepsNegativeDifference = i18n(R.string.steps_negative_difference, context)
-            this.totalTime = i18n(R.string.total_time, context)
-            this.filterTypes = FilterFactory.FilterType.values().map {
+            pedometerTestOutput = i18n(R.string.pedometer_test_output, context)
+            testDate = i18n(R.string.test_date, context)
+            algorithm = i18n(R.string.algorithm, context)
+            numberOfTestCases = i18n(R.string.number_of_test_cases, context)
+            expected = i18n(R.string.expected, context)
+            detected = i18n(R.string.detected, context)
+            pedometerTestDebug = i18n(R.string.pedometer_test_debug, context)
+            testCasesPlots = i18n(R.string.test_cases_plots, context)
+            device = i18n(R.string.device, context)
+            filter = i18n(R.string.filter, context)
+            movement = i18n(R.string.movement_type, context).toLowerCase()
+            stepCount = i18n(R.string.step_count, context)
+            magn = i18n(R.string.magn, context)
+            threshold = i18n(R.string.threshold, context).toLowerCase()
+            sensitivity = i18n(R.string.sensitivity, context).toLowerCase()
+            pedometerTestInfoOutput = i18n(R.string.pedometer_test_info, context)
+            devices = i18n(R.string.devices, context)
+            allDevices = i18n(R.string.all_devices, context)
+            error = i18n(R.string.error_model, context)
+            steps = i18n(R.string.steps_model, context)
+            detectedSteps = i18n(R.string.detected_steps, context)
+            stepsDifference = i18n(R.string.steps_difference, context)
+            stepsPositiveDifference = i18n(R.string.steps_positive_difference, context)
+            stepsNegativeDifference = i18n(R.string.steps_negative_difference, context)
+            totalTime = i18n(R.string.total_time, context)
+            samplingRate = i18n(R.string.sampling_rate, context)
+            filterTypes = FilterFactory.FilterType.values().map {
                 it to getStringResourceByName(it.toString(), context).toLowerCase()
             }.toMap()
-            this.movementTypes = InertialDataset.InertialMovementType.values().map {
+            movementTypes = InertialDataset.InertialMovementType.values().map {
+                it to getStringResourceByName(it.toString(), context).toLowerCase()
+            }.toMap()
+            sensorDelays = SensorDelay.values().map {
                 it to getStringResourceByName(it.toString(), context).toLowerCase()
             }.toMap()
         }
@@ -132,7 +142,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
 
     fun totalError(output: List<Pair<InertialDataset, Int>>) = totalStepsDifference(output).toFloat() / totalSteps(output)
 
-    fun saveOutput(outputStream: OutputStream) {
+    fun saveOutput(outputStream: OutputStream, context: Context?) {
         val writer = BufferedWriter(OutputStreamWriter(outputStream))
         writer.write(i18n.pedometerTestOutput)
         writer.newLine()
@@ -140,7 +150,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.write(Dataset.dateFormatter.format(Date()))
         writer.newLine()
         writer.write("${i18n.algorithm}: ")
-        writer.write(getFormattedFilterType())
+        writer.write(getFormattedFilterTypeI18n())
         writer.newLine()
         writer.write("${i18n.numberOfTestCases}: ")
         writer.write(output.size.toString())
@@ -149,7 +159,11 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         all.forEach {
             writer.newLine()
             writer.newLine()
-            writer.write(it.first.toString())
+            if (context == null) {
+                writer.write(it.first.toString())
+            } else {
+                writer.write(it.first.toString(context))
+            }
             writer.newLine()
             writer.write("${i18n.expected}: ")
             writer.write(it.first.steps.toString())
@@ -160,7 +174,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.close()
     }
 
-    fun generateDebug(dataset: Iterable<InertialDataset>, outputStream: OutputStream) {
+    fun generateDebug(dataset: Iterable<InertialDataset>, outputStream: OutputStream, context: Context?) {
         val writer = BufferedWriter(OutputStreamWriter(outputStream))
         writer.write("// ${i18n.pedometerTestDebug}")
         writer.newLine()
@@ -168,10 +182,13 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.write(Dataset.dateFormatter.format(Date()))
         writer.newLine()
         writer.write("// ${i18n.algorithm}: ")
-        writer.write(getFormattedFilterType())
+        writer.write(getFormattedFilterTypeI18n())
         writer.newLine()
         writer.write("// ${i18n.testCasesPlots}: ")
         writer.write(output.size.toString())
+        writer.newLine()
+        writer.newLine()
+        writer.write("gcf().figure_size = [1500,600];")
         writer.newLine()
         for (inertialData in dataset) {
             val pedometer = Pedometer(filterFactory.createFilter())
@@ -181,7 +198,11 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.newLine()
             writer.write("// ${i18n.device}: ")
-            writer.write(inertialData.toString())
+            if (context == null) {
+                writer.write(inertialData.toString())
+            } else {
+                writer.write(inertialData.toString(context))
+            }
             writer.newLine()
             writer.write("// ${i18n.expected}: ")
             writer.write(inertialData.steps.toString())
@@ -225,7 +246,9 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             val title = "title('${i18n.device}: " + formatDeviceName(inertialData) +
                     ", ${i18n.filter}: " + getFormattedFilterTypeI18n() +
-                    ", ${i18n.movement}: " +
+                    ", ${i18n.samplingRate.toLowerCase()} " + (i18n.sensorDelays[inertialData.sensorDelay]
+                    ?: inertialData.sensorDelay.toString()) +
+                    ", ${i18n.movement} " +
                     (i18n.movementTypes[inertialData.movementType]
                             ?: inertialData.movementType.toString()) +
                     ", ${i18n.stepCount}: " + inertialData.steps +
@@ -244,7 +267,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-axyz.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-axyz.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -260,7 +283,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-amagn.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-amagn.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -276,7 +299,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-afm.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-afm.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -292,7 +315,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-postfilter.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-postfilter.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -308,7 +331,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + filterFactory.filterType + "-sensitivity.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-sensitivity.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
@@ -318,7 +341,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
 
     private fun getFormattedFilterType(): String {
         return if (filterFactory.filterType == FilterFactory.FilterType.MOVING_AVERAGE_FILTER) {
-            filterFactory.filterType.toString() + " (" + filterFactory.averagingWindowLength + ")"
+            filterFactory.filterType.toString() + "-" + filterFactory.averagingWindowLength
         } else {
             filterFactory.filterType.toString()
         }
@@ -341,8 +364,8 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.write("${i18n.testDate}: ")
         writer.write(Dataset.dateFormatter.format(Date()))
         writer.newLine()
-        writer.write("${i18n.algorithm}:")
-        writer.write(getFormattedFilterType())
+        writer.write("${i18n.algorithm}: ")
+        writer.write(getFormattedFilterTypeI18n())
         writer.newLine()
         writer.write("${i18n.devices}: ")
         writer.write(deviceDatasets.keys.joinToString())
@@ -368,7 +391,9 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         deviceTestCases
                 .groupBy { Pair(it.first.movementType, it.first.sensorDelay) }
                 .forEach {
-                    appendDatasetTestInfo(writer, it.value, title + " " + it.key.first + " " + it.key.second)
+                    appendDatasetTestInfo(writer, it.value, "$title, " + (i18n.movementTypes[it.key.first]
+                            ?: it.key.first).toString().toUpperCase() + ", " + (i18n.sensorDelays[it.key.second]
+                            ?: it.key.second).toString().toUpperCase())
                 }
     }
 
@@ -377,46 +402,51 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         deviceTestCases
                 .groupBy { it.first.movementType }
                 .forEach {
-                    appendDatasetTestInfo(writer, it.value, title + " " + it.key)
+                    appendDatasetTestInfo(writer, it.value, "$title, " + (i18n.movementTypes[it.key]
+                            ?: it.key).toString().toUpperCase())
                 }
         deviceTestCases
                 .groupBy { it.first.sensorDelay }
                 .forEach {
-                    appendDatasetTestInfo(writer, it.value, title + " " + it.key)
+                    appendDatasetTestInfo(writer, it.value, "$title, " + (i18n.sensorDelays[it.key]
+                            ?: it.key).toString().toUpperCase())
                 }
     }
 
     private fun appendDatasetTestInfo(writer: BufferedWriter, deviceTestCases: List<Pair<InertialDataset, Int>>, title: String) {
-
+        writer.write(title)
+        writer.write(": ${i18n.numberOfTestCases} = ")
+        writer.write(deviceTestCases.size.toString())
+        writer.newLine()
         if (totalSteps(deviceTestCases) != 0) {
             writer.write(title)
-            writer.write(" ${i18n.error}: ")
+            writer.write(": ${i18n.error} = ")
             writer.write(totalError(deviceTestCases).times(100f).toString())
             writer.write("%")
             writer.newLine()
         }
         writer.write(title)
-        writer.write(" ${i18n.steps}: ")
+        writer.write(": ${i18n.steps} = ")
         writer.write(totalSteps(deviceTestCases).toString())
         writer.newLine()
         writer.write(title)
-        writer.write(" ${i18n.detectedSteps}: ")
+        writer.write(": ${i18n.detectedSteps} = ")
         writer.write(totalStepsDetected(deviceTestCases).toString())
         writer.newLine()
         writer.write(title)
-        writer.write(" ${i18n.stepsDifference}: ")
+        writer.write(": ${i18n.stepsDifference} = ")
         writer.write(totalStepsDifference(deviceTestCases).toString())
         writer.newLine()
         writer.write(title)
-        writer.write(" ${i18n.stepsPositiveDifference}: ")
+        writer.write(": ${i18n.stepsPositiveDifference} = ")
         writer.write(totalStepsDifferencePositive(deviceTestCases).toString())
         writer.newLine()
         writer.write(title)
-        writer.write(" ${i18n.stepsNegativeDifference}: ")
+        writer.write(": ${i18n.stepsNegativeDifference} = ")
         writer.write(totalStepsDifferenceNegative(deviceTestCases).toString())
         writer.newLine()
         writer.write(title)
-        writer.write(" ${i18n.totalTime}: ")
+        writer.write(": ${i18n.totalTime} = ")
         writer.write(Math.round(totalTime(deviceTestCases)).toString())
         writer.write(" s")
         writer.newLine()
