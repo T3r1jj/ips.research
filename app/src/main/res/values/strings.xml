@@ -139,4 +139,5 @@
     <string name="throw_dataset_type">Common DatasetType not found, probably programmer error</string>
     <string name="throw_no_training_data">No training data</string>
     <string name="select">Select</string>
+    <string name="dataset_transformation">Dataset transformation</string>
 </resources>

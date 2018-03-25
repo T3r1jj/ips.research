@@ -22,7 +22,9 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
         var endDatetime = "Data collecting end datetime"
         var attributesFromDevices = "Attributes from devices"
         var devData = "Device data"
-        var ssidRegexLabel = "SSID regex"
+        var ssidRegexLabel = "SSID regex:"
+        var processingFunction = "Dataset transformation:"
+        var processingFunctions = Processing.values().map { it to it.toString() }.toMap()
 
         fun loadI18n(context: Context) {
             date = i18n(R.string.test_date, context)
@@ -32,12 +34,21 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
             attributesFromDevices = i18n(R.string.attributes_from_devices, context)
             devData = i18n(R.string.dev_data, context)
             ssidRegexLabel = i18n(R.string.ssid_regex, context)
+            processingFunction = i18n(R.string.dataset_transformation, context)
+            processingFunctions = Processing.values().map {
+                it to getStringResourceByName(it.toString(), context)
+            }.toMap()
         }
 
         private fun i18n(resId: Int, context: Context): String {
             return context.getString(resId)
         }
 
+        private fun getStringResourceByName(aString: String, context: Context): String {
+            val packageName = context.packageName
+            val resId = context.resources.getIdentifier(aString, "string", packageName)
+            return context.getString(resId)
+        }
     }
 
     val i18n = I18n()
@@ -259,15 +270,20 @@ class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
     fun writeToFile(outputStream: OutputStream, device: String) {
         val writer = PrintWriter(outputStream)
         writer.println("% ${i18n.date}: " + Dataset.dateFormatter.format(Date()))
-        writer.println("% ${i18n.dataType}: " + type)
+        writer.println("% ${i18n.dataType}: $type " + opts.attributeDataType.toString())
         writer.println("% ${i18n.startDatetime}: " + Dataset.dateFormatter.format(Date(startTimestamp[device]
                 ?: System.currentTimeMillis())))
         writer.println("% ${i18n.endDatetime}: " + Dataset.dateFormatter.format(Date(endTimestamp[device]
                 ?: System.currentTimeMillis())))
         writer.println("% ${i18n.attributesFromDevices}: " + trainDevices)
         writer.println("% ${i18n.devData}: " + device)
-        writer.println("% ${i18n.ssidRegexLabel}: " + ssidRegex.pattern)
-        writer.println("@RELATION $type")
+        writer.println("% ${i18n.ssidRegexLabel} " + ssidRegex.pattern)
+        if (trainDevices == device) {
+            writer.println("% ${i18n.processingFunction}: " + i18n.processingFunctions[opts.trainProcessing])
+        } else if (testDevices.contains(device)) {
+            writer.println("% ${i18n.processingFunction}: " + i18n.processingFunctions[opts.testProcessing])
+        }
+        writer.println("@RELATION ${type}_" + opts.attributeDataType.toString())
         writer.println()
         for (attribute in attributes) {
             writer.println("@ATTRIBUTE $attribute NUMERIC")

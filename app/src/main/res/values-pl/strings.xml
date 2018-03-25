@@ -140,4 +140,5 @@
     <string name="throw_dataset_type">Nie znaleziono wspólnej wartości DatasetType, prawdopodobnie błąd programisty</string>
     <string name="throw_no_training_data">Brak danych treningowych</string>
     <string name="select">Wybierz</string>
+    <string name="dataset_transformation">Transformacja zbioru</string>
 </resources>
