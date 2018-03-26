@@ -12,7 +12,7 @@ import java.io.PrintWriter
 import java.util.*
 
 @Suppress("EnumEntryName")
-class ArffTransform(private val ssidRegex: Regex, val opts: Options) {
+class ArffTransform(internal val ssidRegex: Regex, val opts: Options) {
     constructor(ssidRegex: Regex) : this(ssidRegex, Options())
 
     class I18n {

@@ -5,6 +5,7 @@ import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
+import weka.classifiers.lazy.IBk
 import java.io.FileInputStream
 
 

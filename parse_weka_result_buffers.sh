@@ -1,4 +1,8 @@
 #!/bin/bash
+if [ $# == 0 ]
+then
+    echo "# Jako kolejne parametry podaj ścieżki plików z wyjściem testów z Weki"
+fi
 dirname=""
 for var in "$@"
 do
@@ -16,9 +20,13 @@ do
     by1Misses=0
     by2Misses=0
 
-    confusionMatrixString=`sed -n '/=== Confusion Matrix ===/,$p' $var`
+    confusionMatrixString=`sed -n '/=== Confusion Matrix ===/,$p' "$var"`
     prefix="=== Confusion Matrix === a b c d e f g h i j k l m n o p q r s t u v w x y z aa ab ac ad ae af <-- classified as "
     confusionMatrixString=`echo $confusionMatrixString | sed -e "s/^$prefix//"`
+    if [[ $confusionMatrixString =~ .*"=== Confusion Matrix ===".* ]]; then
+        confusionMatrixString=`sed -n -e 's/^.*=== Confusion Matrix === a b c d e f g h i j k l m n o p q r s t u v w x y z aa ab ac ad ae af <-- classified as //p' <<< "$confusionMatrixString"`
+        confusionMatrixString=`echo $confusionMatrixString | sed -e "s/^$prefix//"`
+    fi
     array=(${confusionMatrixString// / })
     declare -A confusionMatrix
     declare -A places

@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ipscollector.iml" filepath="$PROJECT_DIR$/ipscollector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ipsresearch.iml" filepath="$PROJECT_DIR$/ipsresearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/weka/weka.iml" filepath="$PROJECT_DIR$/weka/weka.iml" />
     </modules>
   </component>
