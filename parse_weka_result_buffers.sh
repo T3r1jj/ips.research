@@ -54,8 +54,8 @@ do
     neighbors["128winda"]="128a 127"
     neighbors["128a"]="130 128winda"
     neighbors["130"]="132 128a"
-    neighbors["132"]="133 130"
-    neighbors["133"]="135 132"
+    neighbors["132"]="133 130 229schody133"
+    neighbors["133"]="135 132 229schody133"
     neighbors["135"]="136 133"
     neighbors["136"]="139 135"
     neighbors["139"]="141 136"
@@ -77,12 +77,12 @@ do
     neighbors["237/238"]="237schody"
     neighbors["237schody"]="237schody121 237/238 236"
     neighbors["237schody121"]="237schody 121"
-    neighbors["229schody133"]="229schody"
+    neighbors["229schody133"]="229schody 132 133"
     neighbors["223schody127"]="127 223"
 
     midSections=("223schody127" "229schody133" "237schody121")
 
-    containsElement () {
+    notIn () {
       local e match="$1"
       shift
       for e; do [[ "$e" == "$match" ]] && return 0; done
@@ -104,25 +104,37 @@ do
         exactHits=$((exactHits+confusionMatrix[$i,$i]))
         place=${places[$i]}
         placeNeighbors=${neighbors[$place]}
+        visitedPlaces=(${place})
         for j in ${placeNeighbors// / }
         do
             placeIndex "$j"
             neighbourIndex=$?
-            by1Misses=$((by1Misses + confusionMatrix[$i,$neighbourIndex]))
+            notIn "${j}" "${visitedPlaces[@]}"
+            notVisitedYet=$?
+            if [ $notVisitedYet -eq 1 ]
+            then
+                by1Misses=$((by1Misses + confusionMatrix[$i,$neighbourIndex]))
+            fi
             neighborPlaceNeighbors=${neighbors[$j]}
-            for k in ${neighborPlaceNeighbors// / }
-            do
-                if [ "${place}" != "${k}" ]
-                then
-                    containsElement "${k}" "${midSections[@]}"
-                    if [ $? ]
+            visitedPlaces+=(${j})
+            notIn "${j}" "${midSections[@]}"
+            notMidSection=$?
+            if [ $notMidSection  -eq 1 ]
+            then
+                for k in ${neighborPlaceNeighbors// / }
+                do
+
+                    notIn "${k}" "${visitedPlaces[@]}"
+                    notVisitedYet=$?
+                    if [ $notVisitedYet -eq 1 ]
                     then
                         placeIndex "$k"
                         neighbourIndex=$?
                         by2Misses=$((by2Misses + confusionMatrix[$i,$neighbourIndex]))
+                        visitedPlaces+=(${k})
                     fi
-                fi
-            done
+                done
+            fi
         done
     done
 

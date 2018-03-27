@@ -1,4 +1,5 @@
 #!/bin/bash
+#java -cp weka.jar  weka.core.WekaPackageManager -install-package WiFiDistance1.0.0.zip
 echo "### Skrypt wymaga obecności weka.jar (z zainstalowaną paczką WiFiDistance1.0.0.zip) oraz parse_weka_result_buffers.sh (z uprawnieniami do wywołania)"
 if [ $# == 0 ]
 then
@@ -6,8 +7,6 @@ then
     exit
 fi
 dirname=${1}
-
-#java -cp weka.jar  weka.core.WekaPackageManager -install-package WiFiDistance1.0.0.zip
 
 javaWithWekaCp="java -cp ./weka.jar"
 total=20
