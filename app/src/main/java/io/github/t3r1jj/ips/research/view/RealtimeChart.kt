@@ -11,14 +11,13 @@ import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.DefaultAxisValueFormatter
+import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.utils.ColorTemplate
 import trikita.anvil.Anvil
 
 abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
-    companion object {
-        private const val VISIBLE_SAMPLE_COUNT = 100
-    }
-
+    var startTime = 0L
     var labels = arrayOf("X", "Y", "Z", "ABS")
     var chartingFrequency = 10f
     protected val chartingDelay
@@ -57,6 +56,10 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         xAxis.setDrawGridLines(false)
         xAxis.setAvoidFirstLastClipping(true)
         xAxis.isEnabled = true
+        val defaultFormatter = DefaultAxisValueFormatter(1)
+        xAxis.valueFormatter = IAxisValueFormatter { value, axis ->
+            defaultFormatter.getFormattedValue(value, axis) + "s"
+        }
         val leftAxis = chart.axisLeft
         leftAxis.axisMaximum = max
         leftAxis.axisMinimum = min
@@ -71,25 +74,6 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         if (data != null) {
             data.dataSets.clear()
             data.notifyDataChanged()
-        }
-    }
-
-    internal fun addChartEntry(chart: LineChart, values: FloatArray) {
-        val data = chart.data
-        if (data != null) {
-            for (index in 0 until values.size) {
-                var set = data.getDataSetByIndex(index)
-                if (set == null) {
-                    set = createSet(index)
-                    data.addDataSet(set)
-                }
-                val x = set.entryCount.toFloat() / chartingFrequency
-                data.addEntry(Entry(x, values[index]), index)
-                data.notifyDataChanged()
-                chart.notifyDataSetChanged()
-                chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / chartingFrequency)
-                chart.moveViewToX(x)
-            }
         }
     }
 
@@ -111,19 +95,18 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         }
     }
 
-    internal fun addChartEntry(chart: LineChart, value: Float) {
+    internal fun addChartEntry(chart: LineChart, value: Float, x: Float) {
         val data = chart.data
         if (data != null) {
             var set = data.getDataSetByIndex(0)
             if (set == null) {
-                set = createSet(0)
+                set = createSet(3)
                 data.addDataSet(set)
             }
-            val x = set.entryCount.toFloat() / chartingFrequency
             data.addEntry(Entry(x, value), 0)
             data.notifyDataChanged()
             chart.notifyDataSetChanged()
-            chart.setVisibleXRangeMaximum(VISIBLE_SAMPLE_COUNT / chartingFrequency)
+            chart.setVisibleXRangeMaximum(10f)
             chart.moveViewToX(x)
         }
     }
@@ -165,5 +148,6 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
             renderInitiator!!.interrupt()
             renderInitiator!!.join()
         }
+        startTime = 0
     }
 }

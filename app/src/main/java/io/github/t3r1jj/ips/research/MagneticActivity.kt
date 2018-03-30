@@ -30,13 +30,20 @@ class MagneticActivity : AppCompatActivity() {
     lateinit var chartRenderer: RealtimeChart
 
     private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
+
         override fun render(): Boolean {
+            if (startTime == 0L) {
+                startTime = System.currentTimeMillis()
+            }
             chartRenderer.addChartEntry(magneticFieldChart, sampler.magneticField.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray(),
+                    ((System.currentTimeMillis() - startTime).toFloat() / 1000))
             chartRenderer.addChartEntry(magneticFingerprintChart, Math.sqrt((sampler.magneticField.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat(),
+                    ((System.currentTimeMillis() - startTime).toFloat() / 1000))
             chartRenderer.addChartEntry(gravityChart, sampler.gravity.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray(),
+                    ((System.currentTimeMillis() - startTime).toFloat() / 1000))
             Thread.sleep(chartingDelay)
             return sampler.isRunning
         }
@@ -87,11 +94,11 @@ class MagneticActivity : AppCompatActivity() {
                         }
                         editText {
                             size(MATCH, WRAP)
-                            text(sampler.sampleCount.toString())
+                            text(sampler.sampleLimit.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
                                 try {
-                                    sampler.sampleCount = it.toString().toInt()
+                                    sampler.sampleLimit = it.toString().toInt()
                                 } catch (nfe: NumberFormatException) {
                                 }
                             }
@@ -123,6 +130,7 @@ class MagneticActivity : AppCompatActivity() {
                             onClick {
                                 stopSampling()
                                 chartRenderer.clearChart(magneticFieldChart)
+                                chartRenderer.clearChart(gravityChart)
                                 chartRenderer.clearChart(magneticFingerprintChart)
                                 submitted = false
                                 sampler.startSampling()
@@ -146,7 +154,8 @@ class MagneticActivity : AppCompatActivity() {
                         orientation(VERTICAL)
                         textView {
                             text(R.string.real_time_data)
-                            size(WRAP, WRAP)
+                            size(MATCH, WRAP)
+                            gravity(CENTER_HORIZONTAL)
                         }
                         linearLayout {
                             orientation(VERTICAL)

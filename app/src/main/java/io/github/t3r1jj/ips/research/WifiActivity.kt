@@ -63,11 +63,11 @@ class WifiActivity : AppCompatActivity() {
                         }
                         editText {
                             size(MATCH, WRAP)
-                            text(sampler.sampleCount.toString())
+                            text(sampler.sampleLimit.toString())
                             inputType(InputType.TYPE_CLASS_NUMBER)
                             onTextChanged {
                                 try {
-                                    sampler.sampleCount = it.toString().toInt()
+                                    sampler.sampleLimit = it.toString().toInt()
                                 } catch (nfe: NumberFormatException) {
                                 }
                             }
@@ -128,7 +128,9 @@ class WifiActivity : AppCompatActivity() {
                         adapter(RenderableAdapter.withItems(sampler.fingerprints, { _, item ->
                             linearLayout {
                                 textView {
-                                    text(item.toString())
+                                    text(item.toString()
+                                            .replace("Fingerprint(", getString(R.string.fingerprint) + "(")
+                                            .replace("timestamp=", getString(R.string.timestamp)) + "=")
                                 }
                             }
                         }))

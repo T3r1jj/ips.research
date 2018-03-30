@@ -19,12 +19,12 @@ import java.net.URL
 
 class Dao(private val context: Context) {
     companion object {
-        internal const val DB_ROOT_URL = "couchdbtest12e3.smileupps.com"
-        private const val DB_PROTOCOL = "http://"
+        internal const val DB_ROOT_URL = "couchdb-25e1c3.smileupps.com"
+        private const val DB_PROTOCOL = "https://"
         private const val DB_NAME = "/ips"
         private const val DB_URL = DB_PROTOCOL + DB_ROOT_URL + DB_NAME
         private const val DB_USERNAME = "admin"
-        private const val DB_PASSWORD = "49c0738edb83"
+        private const val DB_PASSWORD = "0b9e78e5148e"
     }
 
     private val objectMapper = ObjectMapper()
@@ -39,15 +39,21 @@ class Dao(private val context: Context) {
         val properties = objectMapper.convertValue<Map<String, Any>>(data,
                 object : TypeReference<HashMap<String, Any>>() {})
         document.putProperties(properties)
+        database.close()
     }
 
     fun saveAll(file: File) {
         val objectMapper = ObjectMapper()
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         val data = objectMapper.readValue<Array<Dataset>>(file, object : TypeReference<Array<Dataset>>() {})
+        val database = getDatabase()
         for (dataset in data) {
-            save(dataset)
+            val document = database.createDocument()
+            val properties = objectMapper.convertValue<Map<String, Any>>(dataset,
+                    object : TypeReference<HashMap<String, Any>>() {})
+            document.putProperties(properties)
         }
+        database.close()
     }
 
     private fun getDatabase(): Database {
@@ -61,7 +67,8 @@ class Dao(private val context: Context) {
 
     fun findAll(): Map<String, Dataset> {
         val results = mutableMapOf<String, Dataset>()
-        val query = getDatabase().createAllDocumentsQuery()
+        val database = getDatabase()
+        val query = database.createAllDocumentsQuery()
         query.allDocsMode = Query.AllDocsMode.ALL_DOCS
         val result = query.run()
         while (result.hasNext()) {
@@ -77,6 +84,7 @@ class Dao(private val context: Context) {
                 delete(row.sourceDocumentId)
             }
         }
+        database.close()
         return results
     }
 
@@ -90,7 +98,9 @@ class Dao(private val context: Context) {
     }
 
     fun delete(id: String) {
-        getDatabase().getDocument(id).delete()
+        val database = getDatabase()
+        database.getDocument(id).delete()
+        database.close()
     }
 
     fun push(): Replication {

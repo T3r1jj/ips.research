@@ -1,7 +1,5 @@
 package io.github.t3r1jj.ips.research.model.algorithm
 
-import io.github.t3r1jj.ips.research.model.LimitedQueue
-import io.github.t3r1jj.ips.research.model.data.Fingerprint
 import io.github.t3r1jj.ips.research.model.data.WifiDataset
 import weka.classifiers.Classifier
 import weka.core.Instances
@@ -20,22 +18,21 @@ class WifiNavigator(var classifier: Classifier, var ssidRegex: Regex) {
         this.trainData = trainData
     }
 
-    val fingerprints = LimitedQueue<Fingerprint>(10)
-    private val predictionSet = WifiDataset("?", fingerprints)
+    var opts = ArffTransform.Options(ArffTransform.AttributeDataType.pWatt, ArffTransform.Processing.NONE, ArffTransform.Processing.AVERAGE)
+    var predictionSet: WifiDataset? = null
     private var trainData: List<WifiDataset>? = null
 
     fun classify(): String {
         if (trainData == null || trainData!!.isEmpty()) {
             return "null"
-        } else if (fingerprints.isEmpty()) {
+        } else if (predictionSet?.fingerprints?.isEmpty() != false) {
             return "?"
         }
-        predictionSet.iterations = fingerprints.size
-        val transform = ArffTransform(ssidRegex)
-        transform.apply(trainData!!, listOf(predictionSet))
+        val transform = ArffTransform(ssidRegex, opts)
+        transform.apply(trainData!!, listOf(predictionSet!!))
         val trainInstances = getInstances(transform, transform.trainDevices)
         trainInstances.setClassIndex(trainInstances.numAttributes() - 1)
-        val predictionInstances = getInstances(transform, predictionSet.device)
+        val predictionInstances = getInstances(transform, predictionSet!!.device)
         predictionInstances.setClassIndex(predictionInstances.numAttributes() - 1)
         val predictionInstance = predictionInstances[predictionInstances.size - 1]
         val prediction = classifier.classifyInstance(predictionInstance)
@@ -60,10 +57,6 @@ class WifiNavigator(var classifier: Classifier, var ssidRegex: Regex) {
         val input = ByteArrayInputStream(trainOutputStream.toByteArray())
         val reader = ConverterUtils.DataSource(input)
         return reader.dataSet
-    }
-
-    fun addFingerprints(newFingerprints: List<Fingerprint>) {
-        fingerprints.addAll(newFingerprints)
     }
 
 }

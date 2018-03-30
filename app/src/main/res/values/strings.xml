@@ -33,14 +33,14 @@
     <string name="real_time_data">Real time data:</string>
     <string name="submit">Submit</string>
     <string name="movement_type">Movement type:</string>
-    <string name="acceleration_label">Acceleration (m/s^2 to s)</string>
-    <string name="acceleration_magnitude_label">Acceleration magnitude (m/s^2 to s)</string>
+    <string name="acceleration_label">Acceleration [m/s^2]</string>
+    <string name="acceleration_magnitude_label">Acceleration magnitude [m/s^2]</string>
     <string name="route_name_required">Please provide a route name</string>
     <string name="number_of_samples">Number of samples:</string>
     <string name="route_name">Route name:</string>
     <string name="magnetic_field_label">Magnetic field (uT)</string>
     <string name="magnetic_field_magnitude_label">Magnetic field magnitude (uT)</string>
-    <string name="gravity_label">Gravity (m/s2 to s)</string>
+    <string name="gravity_label">Gravity [m/s^2]</string>
     <string name="place_name">Place name:</string>
     <string name="number_of_scans">Number of scans:</string>
     <string name="sampling_rate">Sampling rate:</string>
@@ -48,8 +48,8 @@
     <string name="threshold">threshold</string>
     <string name="sensitivity">sensitivity</string>
     <string name="error">Error:</string>
-    <string name="pedometer_alg_label">Pedometer algorithm (m/s^2 to s)</string>
-    <string name="pedometer_sens_label">Pedometer sensitivity (m/s^2 to s)</string>
+    <string name="pedometer_alg_label">Pedometer algorithm [m/s^2]</string>
+    <string name="pedometer_sens_label">Pedometer sensitivity [m/s^2]</string>
     <string name="wifi_position">WiFi Position</string>
     <string name="place">Place:</string>
     <string name="pedometer">Pedometer</string>
@@ -75,8 +75,8 @@
     <string name="loading_finished">Loading finished</string>
     <string name="replication_started">Started replication in the background</string>
     <string name="uploading_finished">Uploading finished</string>
-    <string name="saved_json_file_to">Saved JSON file to:</string>
-    <string name="do_you_want_to_delete">Do you want to delete record:</string>
+    <string name="saved_json_file_to">Saved JSON file to: </string>
+    <string name="do_you_want_to_delete">Do you want to delete record: </string>
     <string name="error_remote_db_not_reachable"><![CDATA[Error: Remote DB is not reachable, check internet connection > try again; if fails > notify app author]]></string>
     <string name="select_json">Select a IPS JSON data file</string>
     <string name="repeat_last">Please repeat the last action</string>
@@ -140,4 +140,7 @@
     <string name="throw_no_training_data">No training data</string>
     <string name="select">Select</string>
     <string name="dataset_transformation">Dataset transformation</string>
+    <string name="random_forest">Random forest</string>
+    <string name="fingerprint">Fingerprint</string>
+    <string name="timestamp">timestamp</string>
 </resources>

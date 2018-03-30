@@ -1,2 +1,0 @@
-configurations.maybeCreate("default")
-artifacts.add("default", file('weka-stable-3.8.1-SNAPSHOT.jar'))

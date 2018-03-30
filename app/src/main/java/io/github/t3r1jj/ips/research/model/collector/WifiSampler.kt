@@ -14,12 +14,16 @@ import java.util.*
 
 
 class WifiSampler(val context: Context) {
-
+    constructor(context: Context, indefinite: Boolean) : this(context) {
+        if (indefinite) {
+            sampleLimit = -1
+        }
+    }
 
     private val wifiScanReceiver = WifiScanReceiver()
     val fingerprints = mutableListOf<Fingerprint>()
     var samplingRate = WifiActivity.SamplingRate._500MS
-    var sampleCount = 10
+    var sampleLimit = 10
     var running = false
         set(value) {
             field = value
@@ -80,7 +84,7 @@ class WifiSampler(val context: Context) {
             fingerprints.addAll(currentFingerprints)
             listener?.onFingerprintsReceived(currentFingerprints)
             Thread.sleep(samplingRate.delay)
-            if (sampleIndex != sampleCount) {
+            if (sampleIndex != sampleLimit) {
                 wifiManager.scanResults.clear()
                 if (!wifiManager.startScan()) {
                     throw RuntimeException("startScan() fail")

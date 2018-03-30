@@ -263,8 +263,8 @@ class DatabaseActivity : AppCompatActivity() {
             val file = getPublicDownloadStorageFile(fileName)
             try {
                 ObjectMapper().writeValue(file.outputStream(), dao.findAll().values)
-                Toast.makeText(this@DatabaseActivity, getString(R.string.saved_json_file_to) + file.absolutePath,
-                        Toast.LENGTH_LONG).show()
+                Toast.makeText(this@DatabaseActivity, getString(R.string.saved_json_file_to) + " "
+                        + file.absolutePath, Toast.LENGTH_LONG).show()
             } catch (ex: RuntimeException) {
                 Toast.makeText(this@DatabaseActivity, getString(R.string.error) + I18nUtils.tryI18nException(this, ex),
                         Toast.LENGTH_LONG).show()
@@ -274,7 +274,7 @@ class DatabaseActivity : AppCompatActivity() {
 
     private fun openRemovalDialog(item: Pair<String, Dataset>) {
         AlertDialog.Builder(this)
-                .setMessage(getString(R.string.do_you_want_to_delete) + item.second.toString() + "?")
+                .setMessage(getString(R.string.do_you_want_to_delete) + " " + item.second.toString(this) + "?")
                 .setPositiveButton(R.string.yes, { _, which ->
                     if (which == DialogInterface.BUTTON_POSITIVE) {
                         dao.delete(item.first)
@@ -370,7 +370,8 @@ class DatabaseActivity : AppCompatActivity() {
             val fileName = "ips.inertial.test.debug." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".sce"
             val file = getPublicDownloadStorageFile(fileName)
             tester.generateDebug(inertialData(), file.outputStream(), this)
-            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + " " + file.absolutePath,
+                    Toast.LENGTH_LONG).show()
         }
     }
 
@@ -381,7 +382,7 @@ class DatabaseActivity : AppCompatActivity() {
             val fileName = "ips.inertial.test.output." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
             tester.saveOutput(file.outputStream(), this)
-            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + " " + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -392,7 +393,7 @@ class DatabaseActivity : AppCompatActivity() {
             val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
             tester.saveOutputInfo(file.outputStream())
-            Toast.makeText(this, getString(R.string.saved_file_to) + file.absolutePath, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.saved_file_to) + " " + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 

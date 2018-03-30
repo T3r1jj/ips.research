@@ -10,9 +10,11 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.github.mikephil.charting.charts.LineChart
 import io.github.t3r1jj.ips.research.model.Dao
+import io.github.t3r1jj.ips.research.model.LimitedQueue
 import io.github.t3r1jj.ips.research.model.algorithm.Pedometer
 import io.github.t3r1jj.ips.research.model.algorithm.WifiNavigator
-import io.github.t3r1jj.ips.research.model.algorithm.filter.KalmanFilter
+import io.github.t3r1jj.ips.research.model.algorithm.filter.FilterFactory
+import io.github.t3r1jj.ips.research.model.algorithm.filter.MovingAverageFilter
 import io.github.t3r1jj.ips.research.model.collector.InertialSampler
 import io.github.t3r1jj.ips.research.model.collector.InertialSampler.InertialSampleListener
 import io.github.t3r1jj.ips.research.model.collector.SensorSample
@@ -25,11 +27,12 @@ import io.github.t3r1jj.ips.research.view.RealtimeChart
 import io.github.t3r1jj.ips.research.view.RenderableView
 import trikita.anvil.Anvil
 import trikita.anvil.DSL.*
-import weka.classifiers.bayes.BayesNet
+import weka.classifiers.trees.RandomForest
 
 class OnlineActivity : AppCompatActivity() {
 
-    private val navigator = WifiNavigator(BayesNet(), Regex("(eduroam|dziekanat|pb-guest|.*hotspot.*)", RegexOption.IGNORE_CASE))
+    private val navigator = WifiNavigator(RandomForest(), Regex("(eduroam|dziekanat|pb-guest|.*hotspot.*)", RegexOption.IGNORE_CASE))
+    private val fingerprintScans = LimitedQueue<List<Fingerprint>>(10)
     private var place = "?"
     private var steps = 0
     private var totalScans = 0
@@ -45,29 +48,27 @@ class OnlineActivity : AppCompatActivity() {
 
     private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
 
-        var lastRenderIndex = 0
-
         override fun render(): Boolean {
             try {
-                for (i in lastRenderIndex + 1 until pedometer.t.size) {
-                    val pedometerData = FloatArray(4)
-                    pedometerData[0] = pedometer.aNormalizedMagnitudes[i]
-                    pedometerData[1] = pedometer.min[i]
-                    pedometerData[2] = pedometer.max[i]
-                    pedometerData[3] = (pedometerData[1] + pedometerData[2]) / 2f
-                    val time = (pedometer.t[i] - pedometer.t.first()) / 1000000000f
-                    chartRenderer.labels = pedometerChartLabels
-                    chartRenderer.addChartEntry(pedometerChart, pedometerData, time)
-                    val pedometerSensitivity = FloatArray(2)
-                    pedometerSensitivity[0] = pedometer.sensitivities[i]
-                    pedometerSensitivity[1] = pedometer.max[i] - pedometer.min[i]
-                    chartRenderer.labels = sensitivityChartLabels
-                    chartRenderer.addChartEntry(sensitivityChart, pedometerSensitivity, time)
-                    lastRenderIndex = i
+                if (startTime == 0L) {
+                    startTime = pedometer.t[0]
                 }
+                val i = pedometer.t.lastIndex
+                val pedometerData = FloatArray(4)
+                pedometerData[0] = pedometer.aNormalizedMagnitudes[i]
+                pedometerData[1] = pedometer.min[i]
+                pedometerData[2] = pedometer.max[i]
+                pedometerData[3] = (pedometerData[1] + pedometerData[2]) / 2f
+                val time = (pedometer.t[i] - startTime) / 1000000000f
+                chartRenderer.labels = pedometerChartLabels
+                chartRenderer.addChartEntry(pedometerChart, pedometerData, time)
+                val pedometerSensitivity = FloatArray(2)
+                pedometerSensitivity[0] = pedometer.sensitivities[i]
+                pedometerSensitivity[1] = pedometer.max[i] - pedometer.min[i]
+                chartRenderer.labels = sensitivityChartLabels
+                chartRenderer.addChartEntry(sensitivityChart, pedometerSensitivity, time)
             } catch (ioobe: IndexOutOfBoundsException) {
                 Log.w("Charting", "IndexOutOfBoundsException")
-                lastRenderIndex = 0
             }
             return inertialSampler.isRunning
         }
@@ -87,7 +88,7 @@ class OnlineActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG).show()
             place = "null"
         }
-        wifiSampler = WifiSampler(this)
+        wifiSampler = WifiSampler(this, true)
         chartRenderer = RealtimeChartRenderer(this)
         inertialSampler = InertialSampler(this)
         pedometerChart = chartRenderer.createChart(0.5f, 1.5f)
@@ -102,7 +103,7 @@ class OnlineActivity : AppCompatActivity() {
                     orientation(LinearLayout.VERTICAL)
                     textView {
                         size(MATCH, WRAP)
-                        text(R.string.wifi_position)
+                        text(getString(R.string.wifi_position) + " [" + getString(R.string.random_forest) + "]")
                         textSize(sip(16f))
                         textColor(ColorStateList.valueOf(Color.BLACK))
                         gravity(CENTER_HORIZONTAL)
@@ -110,7 +111,7 @@ class OnlineActivity : AppCompatActivity() {
                     textView {
                         size(MATCH, WRAP)
                         padding(dip(8))
-                        text(getString(R.string.wifi_online_test_description, navigator.fingerprints.size, totalScans))
+                        text(getString(R.string.wifi_online_test_description, fingerprintScans.size, totalScans))
                         gravity(CENTER_HORIZONTAL)
                     }
 
@@ -132,7 +133,10 @@ class OnlineActivity : AppCompatActivity() {
                     textView {
                         padding(0, dip(16), 0, 0)
                         size(MATCH, WRAP)
-                        text(R.string.pedometer)
+                        text(getString(R.string.pedometer) + " [" +
+                                getStringResourceByName(FilterFactory.FilterType.MOVING_AVERAGE_FILTER.toString())
+                                + " (3), " + getString(R.string.sampling_rate) + ": " +
+                                getStringResourceByName(inertialSampler.delay.toString()) + " ]")
                         textSize(sip(16f))
                         textColor(ColorStateList.valueOf(Color.BLACK))
                         gravity(CENTER_HORIZONTAL)
@@ -140,7 +144,7 @@ class OnlineActivity : AppCompatActivity() {
                     linearLayout {
                         size(MATCH, WRAP)
                         orientation(LinearLayout.HORIZONTAL)
-                        padding(dip(8), 0, 0, 8)
+                        padding(dip(8), dip(8), 0, 8)
                         textView {
                             size(WRAP, WRAP)
                             text(R.string.steps)
@@ -187,7 +191,7 @@ class OnlineActivity : AppCompatActivity() {
                             onClick {
                                 try {
                                     stopSampling()
-                                    pedometer = Pedometer(KalmanFilter())
+                                    pedometer = Pedometer(MovingAverageFilter(3), false)
                                     inertialSampler.samplerListener = object : InertialSampleListener {
                                         override fun onSampleReceived(sensorSample: SensorSample) {
                                             pedometer.processSample(sensorSample)
@@ -199,8 +203,10 @@ class OnlineActivity : AppCompatActivity() {
                                     }
                                     wifiSampler.listener = object : WifiSampler.WifiFingerprintListener {
                                         override fun onFingerprintsReceived(fingerprints: List<Fingerprint>) {
-                                            navigator.addFingerprints(fingerprints)
+                                            fingerprintScans.add(fingerprints)
                                             Thread({
+                                                navigator.predictionSet = WifiDataset("?", fingerprintScans.flatten())
+                                                navigator.predictionSet!!.iterations = fingerprintScans.size
                                                 place = navigator.classify()
                                                 totalScans++
                                                 Anvil.render()
@@ -251,7 +257,12 @@ class OnlineActivity : AppCompatActivity() {
         wifiSampler.stopSampling()
         inertialSampler.stopSampling()
         chartRenderer.stopRendering()
-        chartRenderer.lastRenderIndex = 0
+    }
+
+    private fun getStringResourceByName(aString: String): String {
+        val packageName = packageName
+        val resId = resources.getIdentifier(aString, "string", packageName)
+        return getString(resId)
     }
 
 }

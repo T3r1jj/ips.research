@@ -10,7 +10,7 @@ class MagneticSampler(context: Context) : SensorSampler() {
     val magneticField = mutableListOf<SensorSample>()
     val gravity = mutableListOf<SensorSample>()
     var isRunning = false
-    var sampleCount = -1
+    var sampleLimit = -1
     val isEmpty: Boolean
         get() {
             return magneticField.isEmpty()
@@ -22,7 +22,7 @@ class MagneticSampler(context: Context) : SensorSampler() {
     inner class SensorSampleUnlimitedEventListener(samples: MutableList<SensorSample>) : SensorSampleEventListener(samples) {
         override fun onSensorChanged(p0: SensorEvent?) {
             super.onSensorChanged(p0)
-            if (sampleCount > 0 && samples.size >= sampleCount) {
+            if (sampleLimit > 0 && samples.size >= sampleLimit) {
                 stopSampling()
             }
         }

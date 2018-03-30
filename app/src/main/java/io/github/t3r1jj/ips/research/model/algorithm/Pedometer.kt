@@ -3,7 +3,11 @@ package io.github.t3r1jj.ips.research.model.algorithm
 import io.github.t3r1jj.ips.research.model.algorithm.filter.SignalFilter
 import io.github.t3r1jj.ips.research.model.collector.SensorSample
 
-class Pedometer(private val filter: SignalFilter) {
+open class Pedometer(private val filter: SignalFilter) {
+    constructor(filter: SignalFilter, cache: Boolean) : this(filter) {
+        this.cache = cache
+    }
+
     companion object {
         const val NORMALIZATION_COEFFICIENT = 9.81f
         const val TIME_WINDOW_NS = 200000000
@@ -23,6 +27,7 @@ class Pedometer(private val filter: SignalFilter) {
     var steps = mutableListOf<Int>()
     val stepCount
         get() = steps.last()
+    var cache = true
 
     fun processSample(sample: SensorSample) {
         t.add(sample.timestamp)
@@ -69,6 +74,23 @@ class Pedometer(private val filter: SignalFilter) {
         min.add(aRecentNormalizedMagnitudes.min()!!)
         max.add(aRecentNormalizedMagnitudes.max()!!)
         filterSteps()
+        if (!cache) {
+            removeOld(timeWindowIndex)
+        }
+    }
+
+    private fun removeOld(timeWindowIndex: Int) {
+        for (i in 0 until timeWindowIndex) {
+            t.removeAt(0)
+            a.removeAt(0)
+            aMagnitudes.removeAt(0)
+            aFilteredMagnitudes.removeAt(0)
+            aNormalizedMagnitudes.removeAt(0)
+            min.removeAt(0)
+            max.removeAt(0)
+            sensitivities.removeAt(0)
+            steps.removeAt(0)
+        }
     }
 
     private fun filterSteps() {

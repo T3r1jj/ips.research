@@ -17,7 +17,7 @@ class WifiNavigatorTest {
         val resource = classLoader.getResource("test.model")
         val fis = FileInputStream(resource.path)
         val navigator = WifiNavigator(fis, listOf())
-        navigator.addFingerprints(listOf())
+        navigator.predictionSet = WifiDataset("?", listOf())
         fis.close()
         val result = navigator.classify()
         assertEquals("121", result)
@@ -41,7 +41,7 @@ class WifiNavigatorTest {
                         WifiDataset("testPlace2", (0 until 100).map {
                             fingerprint2
                         }.toList())))
-        navigator.addFingerprints(listOf(Fingerprint("bssid", -50, System.currentTimeMillis(), "eduroam")))
+        navigator.predictionSet = WifiDataset("?", listOf(Fingerprint("bssid", -50, System.currentTimeMillis(), "eduroam")))
         val result = navigator.classify()
         assertEquals("testPlace", result)
     }

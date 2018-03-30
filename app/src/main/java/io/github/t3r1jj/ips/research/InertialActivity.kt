@@ -33,11 +33,17 @@ class InertialActivity : AppCompatActivity() {
     lateinit var chartRenderer: RealtimeChart
 
     private inner class RealtimeChartRenderer(context: Context) : RealtimeChart(context) {
+
         override fun render(): Boolean {
+            if (startTime == 0L) {
+                startTime = System.currentTimeMillis()
+            }
             chartRenderer.addChartEntry(accelerationChart, sampler.acceleration.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray())
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray(),
+                    ((System.currentTimeMillis() - startTime).toFloat() / 1000))
             chartRenderer.addChartEntry(accelerationMagnitudeChart, Math.sqrt((sampler.acceleration.lastOrNull()?.data
-                    ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat())
+                    ?: arrayOf(0f, 0f, 0f).toFloatArray()).sumByDouble { (it * it).toDouble() }).toFloat(),
+                    ((System.currentTimeMillis() - startTime).toFloat() / 1000))
             return sampler.isRunning
         }
     }
@@ -168,7 +174,8 @@ class InertialActivity : AppCompatActivity() {
                         orientation(VERTICAL)
                         textView {
                             text(R.string.real_time_data)
-                            size(WRAP, WRAP)
+                            size(MATCH, WRAP)
+                            gravity(CENTER_HORIZONTAL)
                         }
                         linearLayout {
                             orientation(VERTICAL)

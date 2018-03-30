@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.widget.LinearLayout
+import io.github.t3r1jj.ips.research.BuildConfig
 import io.github.t3r1jj.ips.research.MainActivity
 import io.github.t3r1jj.ips.research.R
 import trikita.anvil.BaseDSL.dip
@@ -36,7 +37,7 @@ class InfoView(context: Context) : RenderableView(context) {
             textView {
                 size(MATCH, WRAP)
                 gravity(CENTER_HORIZONTAL)
-                text(resources.getString(R.string.author) + ": Damian Terlecki")
+                text(resources.getString(R.string.author) + ": Damian Terlecki <terleckidamian1@gmail.com>")
             }
             textView {
                 size(MATCH, WRAP)
@@ -47,6 +48,11 @@ class InfoView(context: Context) : RenderableView(context) {
                 size(MATCH, WRAP)
                 gravity(CENTER_HORIZONTAL)
                 text(R.string.licensed_under)
+            }
+            textView {
+                size(MATCH, WRAP)
+                gravity(CENTER_HORIZONTAL)
+                text("v." + BuildConfig.VERSION_NAME)
             }
             linearLayout {
                 size(MATCH, WRAP)

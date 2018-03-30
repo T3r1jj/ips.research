@@ -29,19 +29,19 @@
     <string name="steps">Kroki:</string>
     <string name="displacement">Przemieszczenie [m]:</string>
     <string name="sensor_delay">Częstotliwość sensora:</string>
-    <string name="sample">Próbka</string>
+    <string name="sample">Próbkuj</string>
     <string name="stop">Stop</string>
     <string name="real_time_data">Dane w czasie rzeczywistym:</string>
     <string name="submit">Zatwierdź</string>
     <string name="movement_type">Typ ruchu:</string>
-    <string name="acceleration_label">Przyspieszenie [m/s^2 względem s]</string>
-    <string name="acceleration_magnitude_label">Wektor przyspieszenia [m/s^2 to s]</string>
+    <string name="acceleration_label">Przyspieszenie [m/s^2]</string>
+    <string name="acceleration_magnitude_label">Wektor przyspieszenia [m/s^2]</string>
     <string name="route_name_required">Proszę podać nazwę ścieżki (trasy)</string>
     <string name="number_of_samples">Liczba próbek:</string>
     <string name="route_name">Nazwa ścieżki:</string>
     <string name="magnetic_field_label">Pole magnetyczne [uT]</string>
     <string name="magnetic_field_magnitude_label">Wektor pola magnetycznego [uT]</string>
-    <string name="gravity_label">Grawitacja [m/s2 względem s]</string>
+    <string name="gravity_label">Grawitacja [m/s^2]</string>
     <string name="place_name">Nazwa miejsca:</string>
     <string name="number_of_scans">Liczba skanowań:</string>
     <string name="sampling_rate">Częstotliwość próbkowania:</string>
@@ -49,8 +49,8 @@
     <string name="threshold">próg</string>
     <string name="sensitivity">czułość</string>
     <string name="error">Błąd:</string>
-    <string name="pedometer_alg_label">Algorytm krokomierza [m/s^2 względem s]</string>
-    <string name="pedometer_sens_label">Czułość krokomierza (m/s^2 względem s)</string>
+    <string name="pedometer_alg_label">Algorytm krokomierza [m/s^2]</string>
+    <string name="pedometer_sens_label">Czułość krokomierza [m/s^2]</string>
     <string name="wifi_position">Pozycja WiFi</string>
     <string name="place">Miejsce:</string>
     <string name="pedometer">Krokomierz</string>
@@ -141,4 +141,7 @@
     <string name="throw_no_training_data">Brak danych treningowych</string>
     <string name="select">Wybierz</string>
     <string name="dataset_transformation">Transformacja zbioru</string>
+    <string name="random_forest">Lasy losowe</string>
+    <string name="fingerprint">OdciskPalcaWiFi</string>
+    <string name="timestamp">czas</string>
 </resources>
