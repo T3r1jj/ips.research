@@ -53,7 +53,7 @@ abstract class RealtimeChart(context: Context) : ContextWrapper(context) {
         legend.form = Legend.LegendForm.LINE
         legend.textColor = Color.BLACK
         val xAxis = chart.xAxis
-        xAxis.setDrawGridLines(false)
+        xAxis.setDrawGridLines(true)
         xAxis.setAvoidFirstLastClipping(true)
         xAxis.isEnabled = true
         val defaultFormatter = DefaultAxisValueFormatter(1)
