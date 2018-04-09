@@ -17,7 +17,6 @@ open class Pedometer(private val filter: SignalFilter) {
     val a = mutableListOf<FloatArray>()
     val aMagnitudes = mutableListOf<Float>()
     val aFilteredMagnitudes = mutableListOf<Float>()
-    val aNormalizedMagnitudes = mutableListOf<Float>()
     val min = mutableListOf<Float>()
     val max = mutableListOf<Float>()
     private var isAbove = false
@@ -37,42 +36,13 @@ open class Pedometer(private val filter: SignalFilter) {
         processLastSample()
     }
 
-    private fun lowPassFilter(values: List<Float>): Float {
-        val divider = when (t.lastIndex) {
-            1 -> 1
-            2 -> 3
-            3 -> 6
-            4 -> 10
-            5 -> 15
-            6 -> 19
-            7 -> 22
-            8 -> 24
-            else -> 25
-        }
-        return ((t.lastIndex downTo t.lastIndex - 3).sumByDouble {
-            when {
-                it < 0 -> 0.toDouble()
-                it == (t.lastIndex - 1) -> 2 * values[it].toDouble()
-                it == (t.lastIndex - 2) -> 3 * values[it].toDouble()
-                it == (t.lastIndex - 3) -> 4 * values[it].toDouble()
-                it == (t.lastIndex - 4) -> 5 * values[it].toDouble()
-                it == (t.lastIndex - 5) -> 4 * values[it].toDouble()
-                it == (t.lastIndex - 6) -> 3 * values[it].toDouble()
-                it == (t.lastIndex - 7) -> 2 * values[it].toDouble()
-                else -> values[it].toDouble()
-            }
-        } / divider).toFloat()
-    }
-
-
     private fun processLastSample() {
         aFilteredMagnitudes.add(filter.apply(aMagnitudes.last()))
-        aNormalizedMagnitudes.add(aFilteredMagnitudes.last() / NORMALIZATION_COEFFICIENT)
         val timeWindowIndex = timeWindowIndex()
-        val aRecentNormalizedMagnitudes = aNormalizedMagnitudes.subList(timeWindowIndex, t.size)
-        updateSensitivity(aRecentNormalizedMagnitudes)
-        min.add(aRecentNormalizedMagnitudes.min()!!)
-        max.add(aRecentNormalizedMagnitudes.max()!!)
+        val aRecentMagnitudes = aFilteredMagnitudes.subList(timeWindowIndex, t.size)
+        updateSensitivity(aRecentMagnitudes)
+        min.add(aRecentMagnitudes.min()!!)
+        max.add(aRecentMagnitudes.max()!!)
         filterSteps()
         if (!cache) {
             removeOld(timeWindowIndex)
@@ -85,7 +55,6 @@ open class Pedometer(private val filter: SignalFilter) {
             a.removeAt(0)
             aMagnitudes.removeAt(0)
             aFilteredMagnitudes.removeAt(0)
-            aNormalizedMagnitudes.removeAt(0)
             min.removeAt(0)
             max.removeAt(0)
             sensitivities.removeAt(0)
@@ -100,7 +69,7 @@ open class Pedometer(private val filter: SignalFilter) {
         var stepCount = steps.lastOrNull() ?: 0
         sensitivities.add(sensitivity)
         if (stepNotTooFast() && aboveSensitivity(max, min)) {
-            val y = aNormalizedMagnitudes.last()
+            val y = aFilteredMagnitudes.last()
             if (isAbove && (y < threshold)) {
                 isAbove = false
                 lastStepTime = t.last()
@@ -122,23 +91,14 @@ open class Pedometer(private val filter: SignalFilter) {
     }
 
     private fun updateSensitivity(values: List<Float>) {
-        var mean = 0f
-        var meanSqr = 0f
+        var sum = 0f
+        var sumSqr = 0f
         for (value in values) {
-            mean += value
-            meanSqr += value * value
+            sum += value
+            sumSqr += value * value
         }
-        var variance = (mean * mean - meanSqr) / values.size
-        if (variance > 0.5f) {
-            variance -= 0.5f
-        }
-        sensitivity = if (!variance.isNaN()) {
-            filter.onVarianceUpdate(variance)
-            (Math.sqrt(variance.toDouble()) / NORMALIZATION_COEFFICIENT).toFloat()
-        } else {
-            1f / 30
-        }
+        val sd = ((sum * sum) - sumSqr) / values.size
+        sensitivity = (Math.sqrt(sd.toDouble()) / NORMALIZATION_COEFFICIENT).toFloat()
     }
-
 
 }

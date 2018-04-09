@@ -9,9 +9,6 @@ class MovingAverageFilter(length: Int) : SignalFilter {
         return recentValues.sumByDouble { it.toDouble() }.div(recentValues.size).toFloat()
     }
 
-    override fun onVarianceUpdate(variance: Float) {
-    }
-
     inner class LimitedQueue<E>(private val limit: Int) : LinkedList<E>() {
 
         override fun add(element: E): Boolean {

@@ -47,7 +47,7 @@
     <string name="sampling_rate">Częstotliwość próbkowania:</string>
     <string name="place_name_required">Proszę podać nazwę miejsca dla potrzeb klasyfikacji</string>
     <string name="threshold">próg</string>
-    <string name="sensitivity">czułość</string>
+    <string name="sensitivity">próg czułości</string>
     <string name="error">Błąd:</string>
     <string name="pedometer_alg_label">Algorytm krokomierza [m/s^2]</string>
     <string name="pedometer_sens_label">Czułość krokomierza [m/s^2]</string>
@@ -144,4 +144,5 @@
     <string name="random_forest">Lasy losowe</string>
     <string name="fingerprint">OdciskPalcaWiFi</string>
     <string name="timestamp">czas</string>
+    <string name="accuracy_model">dokładność</string>
 </resources>

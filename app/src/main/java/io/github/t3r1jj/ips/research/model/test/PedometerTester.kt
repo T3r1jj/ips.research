@@ -34,7 +34,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         var stepCount = "step count"
         var magn = "magn"
         var threshold = "threshold"
-        var sensitivity = "czułość"
+        var sensitivity = "sensitivity threshold"
         var pedometerTestInfoOutput = "Pedometer test info output"
         var devices = "Devices"
         var allDevices = "ALL DEVICES"
@@ -46,6 +46,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         var stepsNegativeDifference = "steps negative difference"
         var totalTime = "total time"
         var samplingRate = "sampling rate"
+        var accuracy = "accuracy"
         var filterTypes = mapOf(FilterFactory.FilterType.NO_FILTER to "NO_FILTER",
                 FilterFactory.FilterType.MOVING_AVERAGE_FILTER to "MOVING_AVERAGE",
                 FilterFactory.FilterType.KALMAN_FILTER to "KALMAN"
@@ -63,6 +64,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
                 SensorDelay.FASTEST to "FASTEST",
                 SensorDelay.NORMAL to "NORMAL"
         )
+
 
         fun loadI18n(context: Context) {
             pedometerTestOutput = i18n(R.string.pedometer_test_output, context)
@@ -84,6 +86,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             devices = i18n(R.string.devices, context)
             allDevices = i18n(R.string.all_devices, context)
             error = i18n(R.string.error_model, context)
+            accuracy = i18n(R.string.accuracy_model, context)
             steps = i18n(R.string.steps_model, context)
             detectedSteps = i18n(R.string.detected_steps, context)
             stepsDifference = i18n(R.string.steps_difference, context)
@@ -123,6 +126,41 @@ class PedometerTester(private val filterFactory: FilterFactory) {
 
     fun totalStepsDifference(data: List<Pair<InertialDataset, Int>>) =
             data.sumBy { Math.abs(it.second - it.first.steps) }
+
+    fun maxAccuracy(data: List<Pair<InertialDataset, Int>>) =
+            data.filter {
+                it.first.steps > 0
+            }.map { 1f - Math.abs(it.second - it.first.steps).div(it.first.steps.toFloat()) }.max()!!
+
+    fun minAccuracy(data: List<Pair<InertialDataset, Int>>) =
+            data.filter {
+                it.first.steps > 0
+            }.map {
+                1f - Math.abs(it.second - it.first.steps).div(it.first.steps.toFloat())
+            }.min()!!
+
+    fun varAccuracy(data: List<Pair<InertialDataset, Int>>): Double {
+        val avg = avgAccuracy(data)
+        val filtered = data.filter {
+            it.first.steps > 0
+        }
+        return filtered
+                .sumByDouble {
+                    val acc = 1.toDouble() - Math.abs(it.second - it.first.steps).div(it.first.steps.toDouble())
+                    val diff = avg - acc
+                    diff * diff
+                } / filtered.size
+    }
+
+    fun frequency(data: List<Pair<InertialDataset, Int>>) =
+            data.sumBy { it.first.acceleration.size } / totalTime(data).toFloat()
+
+    fun avgAccuracy(data: List<Pair<InertialDataset, Int>>): Double {
+        val filtered = data.filter {
+            it.first.steps > 0
+        }
+        return filtered.sumByDouble { 1.toDouble() - Math.abs(it.second - it.first.steps).div(it.first.steps.toDouble()) } / filtered.size
+    }
 
     fun totalStepsDifferencePositive(data: List<Pair<InertialDataset, Int>>) =
             data.sumBy { if (it.first.steps < it.second) Math.abs(it.second - it.first.steps) else 0 }
@@ -188,7 +226,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.write(output.size.toString())
         writer.newLine()
         writer.newLine()
-        writer.write("gcf().figure_size = [1500,600];")
+        writer.write("gcf().figure_size = [1200,600];")
         writer.newLine()
         for (inertialData in dataset) {
             val pedometer = Pedometer(filterFactory.createFilter())
@@ -232,16 +270,13 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.write("aFM = ")
             writer.write(pedometer.aFilteredMagnitudes.joinToString(";", "[", "];"))
             writer.newLine()
-            writer.write("aFMN = ")
-            writer.write(pedometer.aNormalizedMagnitudes.joinToString(";", "[", "];"))
-            writer.newLine()
-            writer.write("aFMNmin = ")
+            writer.write("aFMmin = ")
             writer.write(pedometer.min.joinToString(";", "[", "]"))
             writer.newLine()
-            writer.write("aFMNmax = ")
+            writer.write("aFMmax = ")
             writer.write(pedometer.max.joinToString(";", "[", "];"))
             writer.newLine()
-            writer.write("aFMNsens = ")
+            writer.write("aFMsens = ")
             writer.write(pedometer.sensitivities.joinToString(";", "[", "];"))
             writer.newLine()
             val title = "title('${i18n.device}: " + formatDeviceName(inertialData) +
@@ -303,7 +338,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
-            writer.write("plot(x,[aFMN, aFMNmin, aFMNmax, (aFMNmin+aFMNmax)/2]);")
+            writer.write("plot(x,[aFM, aFMmin, aFMmax, (aFMmin+aFMmax)/2]);")
             writer.newLine()
             writer.write(title)
             writer.newLine()
@@ -311,15 +346,15 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write(yLabel)
             writer.newLine()
-            writer.write("hl=legend(['norm(${i18n.filter}(${i18n.magn}(a))))';'min';'max';'${i18n.threshold}']);")
+            writer.write("hl=legend(['${i18n.filter}(${i18n.magn}(a))';'min';'max';'${i18n.threshold}']);")
             writer.newLine()
             writer.write("mkdir('ips');")
             writer.newLine()
-            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-postfilter.png');")
+            writer.write("xs2png(gcf(),'ips/" + inertialData.timestamp.toString() + "." + getFormattedFilterType() + "-threshold.png');")
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
-            writer.write("plot(x,[(aFMNmax-aFMNmin)/2,aFMNsens]);")
+            writer.write("plot(x,[(aFMmax-aFMmin)/2,aFMsens]);")
             writer.newLine()
             writer.write(title)
             writer.newLine()
@@ -424,6 +459,31 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.write(totalError(deviceTestCases).times(100f).toString())
             writer.write("%")
             writer.newLine()
+            writer.write(title)
+            writer.write(": ${i18n.accuracy} = ")
+            writer.write(100f.minus(totalError(deviceTestCases).times(100f)).toString())
+            writer.write("%")
+            writer.newLine()
+            writer.write(title)
+            writer.write(": min ${i18n.accuracy} = ")
+            writer.write(minAccuracy(deviceTestCases).times(100f).toString())
+            writer.write("%")
+            writer.newLine()
+            writer.write(title)
+            writer.write(": max ${i18n.accuracy} = ")
+            writer.write(maxAccuracy(deviceTestCases).times(100f).toString())
+            writer.write("%")
+            writer.newLine()
+            writer.write(title)
+            writer.write(": avg ${i18n.accuracy} per test = ")
+            writer.write(avgAccuracy(deviceTestCases).times(100f).toString())
+            writer.write("%")
+            writer.newLine()
+            writer.write(title)
+            writer.write(": var ${i18n.accuracy} per test = ")
+            writer.write(varAccuracy(deviceTestCases).times(100f).toString())
+            writer.write("%")
+            writer.newLine()
         }
         writer.write(title)
         writer.write(": ${i18n.steps} = ")
@@ -449,6 +509,11 @@ class PedometerTester(private val filterFactory: FilterFactory) {
         writer.write(": ${i18n.totalTime} = ")
         writer.write(Math.round(totalTime(deviceTestCases)).toString())
         writer.write(" s")
+        writer.newLine()
+        writer.write(title)
+        writer.write(": f = ")
+        writer.write(frequency(deviceTestCases).toString())
+        writer.write(" Hz")
         writer.newLine()
     }
 

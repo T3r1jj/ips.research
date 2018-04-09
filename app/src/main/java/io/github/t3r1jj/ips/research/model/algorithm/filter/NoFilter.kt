@@ -5,7 +5,4 @@ class NoFilter : SignalFilter {
         return value
     }
 
-    override fun onVarianceUpdate(variance: Float) {
-    }
-
 }

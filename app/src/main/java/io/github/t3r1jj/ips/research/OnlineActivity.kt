@@ -55,7 +55,7 @@ class OnlineActivity : AppCompatActivity() {
                 }
                 val i = pedometer.t.lastIndex
                 val pedometerData = FloatArray(4)
-                pedometerData[0] = pedometer.aNormalizedMagnitudes[i]
+                pedometerData[0] = pedometer.aFilteredMagnitudes[i]
                 pedometerData[1] = pedometer.min[i]
                 pedometerData[2] = pedometer.max[i]
                 pedometerData[3] = (pedometerData[1] + pedometerData[2]) / 2f
@@ -76,7 +76,7 @@ class OnlineActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pedometerChartLabels = arrayOf("aNorm", "min", "max", getString(R.string.threshold))
+        pedometerChartLabels = arrayOf("a", "min", "max", getString(R.string.threshold))
         sensitivityChartLabels = arrayOf(getString(R.string.sensitivity), "max-min")
         trainSet = Dao(this).findAll().values
                 .filter { it.type == DatasetType.WIFI }
@@ -91,9 +91,9 @@ class OnlineActivity : AppCompatActivity() {
         wifiSampler = WifiSampler(this, true)
         chartRenderer = RealtimeChartRenderer(this)
         inertialSampler = InertialSampler(this)
-        pedometerChart = chartRenderer.createChart(0.5f, 1.5f)
+        pedometerChart = chartRenderer.createChart(4f, 16f)
         pedometerChart.description.text = getString(R.string.pedometer_alg_label)
-        sensitivityChart = chartRenderer.createChart(0f, 1.5f)
+        sensitivityChart = chartRenderer.createChart(0f, 10f)
         sensitivityChart.description.text = getString(R.string.pedometer_sens_label)
         setContentView(object : RenderableView(this) {
             override fun view() {

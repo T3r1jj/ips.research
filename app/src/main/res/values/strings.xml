@@ -46,7 +46,7 @@
     <string name="sampling_rate">Sampling rate:</string>
     <string name="place_name_required">Please provide a place name for classification</string>
     <string name="threshold">threshold</string>
-    <string name="sensitivity">sensitivity</string>
+    <string name="sensitivity">sensitivity threshold</string>
     <string name="error">Error:</string>
     <string name="pedometer_alg_label">Pedometer algorithm [m/s^2]</string>
     <string name="pedometer_sens_label">Pedometer sensitivity [m/s^2]</string>
@@ -143,4 +143,5 @@
     <string name="random_forest">Random forest</string>
     <string name="fingerprint">Fingerprint</string>
     <string name="timestamp">timestamp</string>
+    <string name="accuracy_model">accuracy</string>
 </resources>

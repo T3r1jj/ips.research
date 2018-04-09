@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.t3r1jj.ips.research.model.algorithm.filter.KalmanFilter
 import io.github.t3r1jj.ips.research.model.data.InertialDataset
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 
 class PedometerTest {
@@ -15,13 +14,9 @@ class PedometerTest {
 
     lateinit var data: InertialDataset
 
-    @Before
-    fun setUp() {
-        data = ObjectMapper().readValue<InertialDataset>(TEST_DATA_JSON.toByteArray(), object : TypeReference<InertialDataset>() {})
-    }
-
     @Test
     fun addSample() {
+        data = ObjectMapper().readValue<InertialDataset>(TEST_DATA_JSON.toByteArray(), object : TypeReference<InertialDataset>() {})
         val pedometer = Pedometer(KalmanFilter())
         for (acceleration in data.acceleration) {
             pedometer.processSample(acceleration)
