@@ -135,7 +135,7 @@ class OnlineActivity : AppCompatActivity() {
                         size(MATCH, WRAP)
                         text(getString(R.string.pedometer) + " [" +
                                 getStringResourceByName(FilterFactory.FilterType.MOVING_AVERAGE_FILTER.toString())
-                                + " (3), " + getString(R.string.sampling_rate) + ": " +
+                                + " (4), " + getString(R.string.sampling_rate) + ": " +
                                 getStringResourceByName(inertialSampler.delay.toString()) + " ]")
                         textSize(sip(16f))
                         textColor(ColorStateList.valueOf(Color.BLACK))
@@ -191,7 +191,7 @@ class OnlineActivity : AppCompatActivity() {
                             onClick {
                                 try {
                                     stopSampling()
-                                    pedometer = Pedometer(MovingAverageFilter(3), false)
+                                    pedometer = Pedometer(MovingAverageFilter(4), false)
                                     inertialSampler.samplerListener = object : InertialSampleListener {
                                         override fun onSampleReceived(sensorSample: SensorSample) {
                                             pedometer.processSample(sensorSample)
