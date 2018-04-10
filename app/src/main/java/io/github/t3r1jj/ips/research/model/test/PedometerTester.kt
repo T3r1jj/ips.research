@@ -354,7 +354,7 @@ class PedometerTester(private val filterFactory: FilterFactory) {
             writer.newLine()
             writer.write("clf;")
             writer.newLine()
-            writer.write("plot(x,[(aFMmax-aFMmin)/2,aFMsens]);")
+            writer.write("plot(x,[(aFMmax-aFMmin),aFMsens]);")
             writer.newLine()
             writer.write(title)
             writer.newLine()

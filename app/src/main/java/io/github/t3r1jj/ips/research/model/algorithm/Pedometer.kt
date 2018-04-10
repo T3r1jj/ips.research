@@ -20,7 +20,7 @@ open class Pedometer(private val filter: SignalFilter) {
     val min = mutableListOf<Float>()
     val max = mutableListOf<Float>()
     private var isAbove = false
-    private var sensitivity = 1 / 30f
+    private var sensitivity = 0f
     private var lastStepTime = 0L
     var sensitivities = mutableListOf<Float>()
     var steps = mutableListOf<Int>()
