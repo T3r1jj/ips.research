@@ -11,11 +11,11 @@
     <string name="wifi">WiFi</string>
     <string name="test_model_online">Test modelu na żywo</string>
     <string name="tested_with_">Testowane z użyciem JUnit + Mockito + Espresso</string>
-    <string name="generated_test_cases_">Wygenerowane przypadki testowe można przetestować/przejrzeć w Wece (.arff) lub Scilabie (.sci)</string>
+    <string name="generated_test_cases_">Wygenerowane przypadki testowe można przetestować/przejrzeć w Wece (.arff) lub Scilabie (.sce)</string>
     <string name="info_to_file">Informacje do pliku</string>
     <string name="output_to_file">Wyjście do pliku</string>
     <string name="debug_to_file">Odpluskwianie do pliku</string>
-    <string name="choose_pedometer_alg">Wybierz algorytm pedometru</string>
+    <string name="choose_pedometer_alg">Dostosuj algorytm pedometru</string>
     <string name="length_moving_avg">Długość okna uśredniania</string>
     <string name="generate">Generuj</string>
     <string name="cancel">Anuluj</string>
@@ -91,6 +91,8 @@
     <string name="created_on">System powstał w wyniku realizacji pracy dyplomowej na Wydziale Informatyki Politechniki Białostockiej</string>
     <string name="licensed_under">Na licencji GPL 3.0</string>
     <string name="components_used">Użyte komponenty:</string>
+    <string name="CONST">STAŁY</string>
+    <string name="AUTO">AUTOMATYCZNY</string>
     <string name="WIFI">WIFI</string>
     <string name="INERTIAL">INER.</string>
     <string name="MAGNETIC">MAGN.</string>
@@ -145,4 +147,7 @@
     <string name="fingerprint">OdciskPalcaWiFi</string>
     <string name="timestamp">czas</string>
     <string name="accuracy_model">dokładność</string>
+    <string name="choose_sensitivity">Wybierz próg czułości algorytmu</string>
+    <string name="sample_count">Liczba próbek</string>
+    <string name="info_to_files">Testy do plików</string>
 </resources>

@@ -36,7 +36,9 @@ import trikita.anvil.BaseDSL.MATCH
 import trikita.anvil.BaseDSL.WRAP
 import trikita.anvil.DSL.*
 import trikita.anvil.RenderableAdapter
+import java.io.BufferedWriter
 import java.io.File
+import java.io.OutputStreamWriter
 import java.util.*
 
 
@@ -387,19 +389,36 @@ class DatabaseActivity : AppCompatActivity() {
     }
 
     fun onPedometerInfoClick() {
+        onPedometerInfoClick(System.currentTimeMillis())
+    }
+
+    fun onPedometerInfoClick(millis: Long) {
         if (!isExternalStorageWritable()) {
             Toast.makeText(this, R.string.external_storage_not_available, Toast.LENGTH_LONG).show()
         } else {
-            val fileName = "ips.inertial.test.info." + System.currentTimeMillis().toString() + "." + getFormattedFilterType() + ".txt"
+            val fileName = "ips.inertial.test.info." + millis.toString() + "." + getFormattedFilterType() + ".txt"
             val file = getPublicDownloadStorageFile(fileName)
             tester.saveOutputInfo(file.outputStream())
             Toast.makeText(this, getString(R.string.saved_file_to) + " " + file.absolutePath, Toast.LENGTH_LONG).show()
         }
     }
 
+    fun onInfoOutputSave(millis: Long, shortInfo: String) {
+        if (!isExternalStorageWritable()) {
+            Toast.makeText(this, R.string.external_storage_not_available, Toast.LENGTH_LONG).show()
+        } else {
+            val fileName = "ips.inertial.test.info." + millis.toString() + ".txt"
+            val file = getPublicDownloadStorageFile(fileName)
+            val writer = BufferedWriter(OutputStreamWriter(file.outputStream()))
+            writer.write(shortInfo)
+            writer.close()
+            Toast.makeText(this, getString(R.string.saved_file_to) + " " + file.absolutePath, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun getFormattedFilterType(): String {
         return if (filterFactory.filterType == FilterFactory.FilterType.MOVING_AVERAGE_FILTER) {
-            filterFactory.filterType.toString() + "-" + filterFactory.averagingWindowLength
+            filterFactory.filterType.toString() + "-" + filterFactory.parameter
         } else {
             filterFactory.filterType.toString()
         }

@@ -8,6 +8,10 @@ open class Pedometer(private val filter: SignalFilter) {
         this.cache = cache
     }
 
+    constructor(filter: SignalFilter, constantSensitivity: Float) : this(filter) {
+        this.constantSensitivity = constantSensitivity
+    }
+
     companion object {
         const val NORMALIZATION_COEFFICIENT = 9.81f
         const val TIME_WINDOW_NS = 200000000
@@ -27,6 +31,7 @@ open class Pedometer(private val filter: SignalFilter) {
     val stepCount
         get() = steps.last()
     var cache = true
+    var constantSensitivity = -1f
 
     fun processSample(sample: SensorSample) {
         t.add(sample.timestamp)
@@ -91,6 +96,10 @@ open class Pedometer(private val filter: SignalFilter) {
     }
 
     private fun updateSensitivity(values: List<Float>) {
+        if (constantSensitivity >= 0.0) {
+            sensitivity = constantSensitivity
+            return
+        }
         var sum = 0f
         var sumSqr = 0f
         for (value in values) {

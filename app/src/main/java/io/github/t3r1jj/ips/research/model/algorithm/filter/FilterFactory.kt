@@ -1,13 +1,13 @@
 package io.github.t3r1jj.ips.research.model.algorithm.filter
 
 class FilterFactory(var filterType: FilterType) {
-    var averagingWindowLength = 3
+    var parameter = 3 as Number
 
     fun createFilter(): SignalFilter {
         return when (filterType) {
             FilterType.NO_FILTER -> NoFilter()
-            FilterType.MOVING_AVERAGE_FILTER -> MovingAverageFilter(averagingWindowLength)
-            FilterType.KALMAN_FILTER -> KalmanFilter()
+            FilterType.MOVING_AVERAGE_FILTER -> MovingAverageFilter(parameter.toInt())
+            FilterType.KALMAN_FILTER -> KalmanFilter(parameter.toFloat())
         }
     }
 

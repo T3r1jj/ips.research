@@ -10,11 +10,11 @@
     <string name="wifi">WiFi</string>
     <string name="test_model_online">Test model online</string>
     <string name="tested_with_">Tested with JUnit + Mockito + Espresso</string>
-    <string name="generated_test_cases_">Generated test cases can be reviewed in Weka (.arff) or Scilab (.sci)</string>
+    <string name="generated_test_cases_">Generated test cases can be reviewed in Weka (.arff) or Scilab (.sce)</string>
     <string name="info_to_file">Info to file</string>
     <string name="output_to_file">Output to file</string>
     <string name="debug_to_file">Debug to file</string>
-    <string name="choose_pedometer_alg">Choose pedometer algorithm</string>
+    <string name="choose_pedometer_alg">Adjust pedometer algorithm</string>
     <string name="length_moving_avg">Length of averaging window</string>
     <string name="generate">Generate</string>
     <string name="cancel">Cancel</string>
@@ -90,6 +90,8 @@
     <string name="licensed_under">Licensed under GPL 3.0</string>
     <string name="components_used">Components used:</string>
     <string name="ssid_regex">SSID regex:</string>
+    <string name="CONST">CONSTANT</string>
+    <string name="AUTO">AUTOMATIC</string>
     <string name="WIFI">WIFI</string>
     <string name="INERTIAL">INER.</string>
     <string name="MAGNETIC">MAGN.</string>
@@ -144,4 +146,7 @@
     <string name="fingerprint">Fingerprint</string>
     <string name="timestamp">timestamp</string>
     <string name="accuracy_model">accuracy</string>
+    <string name="choose_sensitivity">Choose sensitivity threshold</string>
+    <string name="sample_count">Sample count</string>
+    <string name="info_to_files">Tests to files</string>
 </resources>

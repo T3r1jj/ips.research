@@ -1,6 +1,7 @@
 package io.github.t3r1jj.ips.research.model.algorithm.filter
 
-class KalmanFilter : SignalFilter {
+class KalmanFilter(val R: Float) : SignalFilter {
+    constructor() : this(4f) // estimated measurement error covariance
 
     private val A = 1f  // state transition factor
     private val H = 1f  // observation factor
@@ -10,7 +11,6 @@ class KalmanFilter : SignalFilter {
     private var P = Float.NaN   // covariance prediction (average error)
     private var z = Float.NaN // measured signal
     private var x = Float.NaN // predicted signal without noise
-    private var R = 10f // estimated measurement error covariance
 
     override fun apply(value: Float): Float {
         z = value
