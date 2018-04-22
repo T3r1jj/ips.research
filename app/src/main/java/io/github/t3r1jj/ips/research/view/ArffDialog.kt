@@ -55,6 +55,9 @@ class ArffDialog(context: Context, private val arffActivity: DatabaseActivity) :
                 .groupBy { "(*) " + it.device }
                 .toSortedMap()
                 .plus(arffActivity.wifiData().groupBy {
+                    dateFormatter.format(it.timestamp)
+                })
+                .plus(arffActivity.wifiData().groupBy {
                     dateFormatter.format(it.timestamp) + " " + it.device
                 })
         val pairs = mutableSetOf<Pair<String, String>>()
