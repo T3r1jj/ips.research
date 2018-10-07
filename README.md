@@ -6,7 +6,7 @@ The aim was to test **accelerometer based pedometer** and **WiFi fingerprinting*
 There are complex frameworks that may provide very good accuracy, like [FIND](https://github.com/schollz/find3). However, they are often based
 on the client-server architecture. The users might not have access to the building WiFi network and to the cellular data (no signal or just preference).
 The point of this research was to test the accuracy and feasibility of **an offline/standalone system**.
-Another important and shared factors were (among other things) **heterogenity of devices** and **changes in the environment** (like presence of people/APs).
+Another important and shared factors were (among other things) **heterogeneity of devices** and **changes in the environment** (like presence of people/APs).
 More information with results and user's guide will be published after few months due to legal requirements.
 
 ### App main features
